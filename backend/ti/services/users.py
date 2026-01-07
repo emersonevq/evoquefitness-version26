@@ -135,6 +135,14 @@ def criar_usuario(db: Session, payload: UserCreate) -> UserCreatedOut:
 
 import unicodedata
 
+# Canonical sector titles that must match the frontend's sectors.ts
+SECTOR_CANONICAL_MAP = {
+    "portal de ti": "Portal de TI",
+    "portal financeiro": "Portal Financeiro",
+    "portal de manutencao": "Portal de Manutenção",
+    "portal de bi": "Portal de BI",
+}
+
 def _normalize_str(s: str) -> str:
     if not s:
         return s
@@ -143,17 +151,35 @@ def _normalize_str(s: str) -> str:
     only_ascii = ''.join([c for c in nfkd if not unicodedata.combining(c)])
     return only_ascii.replace('\u00a0', ' ').strip().lower()
 
+def _denormalize_sector(normalized: str) -> str:
+    """Convert normalized sector name back to canonical title.
+
+    Example: 'portal de ti' -> 'Portal de TI'
+    If not found in map, return the normalized version as-is.
+    """
+    if not normalized:
+        return normalized
+    canonical = SECTOR_CANONICAL_MAP.get(normalized.lower())
+    return canonical if canonical else normalized
+
 
 def _set_setores(user: User, setores):
+    print(f"[_set_setores] Recebido: {setores} (tipo: {type(setores)})")
     if setores and isinstance(setores, list) and len(setores) > 0:
+        print(f"[_set_setores] É uma lista não-vazia com {len(setores)} items")
         normalized = [_normalize_str(str(s)) for s in setores]
+        print(f"[_set_setores] Normalizado: {normalized}")
         user._setores = json.dumps(normalized)
         user.setor = normalized[0] if normalized else None
+        print(f"[_set_setores] Salvando: _setores={user._setores}, setor={user.setor}")
     elif setores and isinstance(setores, str):
+        print(f"[_set_setores] É uma string única")
         normalized = _normalize_str(str(setores))
         user._setores = json.dumps([normalized])
         user.setor = normalized
+        print(f"[_set_setores] Salvando: _setores={user._setores}, setor={user.setor}")
     else:
+        print(f"[_set_setores] Setores vazio ou None - limpando")
         user._setores = None
         user.setor = None
 
@@ -305,16 +331,16 @@ def authenticate_user(db: Session, identifier: str, senha: str) -> dict:
     except Exception:
         db.rollback()
 
-    # prepare setores list and normalize strings (remove accents)
+    # prepare setores list and denormalize to canonical titles
     setores_list: list[str] = []
     try:
         if user._setores:
             raw = json.loads(user._setores)
-            setores_list = [ _normalize_str(str(s)) for s in raw if s is not None ]
+            setores_list = [ _denormalize_sector(str(s)) for s in raw if s is not None ]
         elif user.setor:
-            setores_list = [ _normalize_str(str(user.setor)) ]
+            setores_list = [ _denormalize_sector(str(user.setor)) ]
     except Exception:
-        setores_list = [ _normalize_str(str(user.setor))] if user.setor else []
+        setores_list = [ _denormalize_sector(str(user.setor))] if user.setor else []
 
     # Debug log to help trace login+alterar_senha flow
     try:

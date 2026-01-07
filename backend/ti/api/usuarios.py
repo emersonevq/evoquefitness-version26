@@ -20,15 +20,17 @@ router = APIRouter(prefix="/usuarios", tags=["TI - Usuarios"])
 def listar_usuarios(db: Session = Depends(get_db)):
     try:
         from ..models import User
+        from ..services.users import _denormalize_sector
         import json
         # helper to compute setores list
         def compute_setores(u) -> list[str]:
             try:
                 if getattr(u, "_setores", None):
                     raw = json.loads(getattr(u, "_setores"))
-                    return [str(x).encode('utf-8', 'ignore').decode('utf-8') if x is not None else "" for x in raw]
+                    # Denormalize back to canonical titles
+                    return [_denormalize_sector(str(x)) if x is not None else "" for x in raw]
                 if getattr(u, "setor", None):
-                    return [str(getattr(u, "setor"))]
+                    return [_denormalize_sector(str(getattr(u, "setor")))]
             except Exception:
                 pass
             return []
@@ -150,6 +152,7 @@ def listar_bloqueados(db: Session = Depends(get_db)):
     try:
         import json
         from ..models import User
+        from ..services.users import _denormalize_sector
         users = list_blocked_users(db)
         rows = []
         for u in users:
@@ -161,13 +164,14 @@ def listar_bloqueados(db: Session = Depends(get_db)):
             try:
                 if getattr(u, "_setores", None):
                     raw = json.loads(getattr(u, "_setores"))
-                    setores_list = [str(x) for x in raw if x is not None]
+                    # Denormalize back to canonical titles
+                    setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
                 elif getattr(u, "setor", None):
-                    setores_list = [str(getattr(u, "setor"))]
+                    setores_list = [_denormalize_sector(str(getattr(u, "setor")))]
                 else:
                     setores_list = []
             except Exception:
-                setores_list = [str(getattr(u, "setor"))] if getattr(u, "setor", None) else []
+                setores_list = [_denormalize_sector(str(getattr(u, "setor")))] if getattr(u, "setor", None) else []
             try:
                 bi_subcategories_list = None
                 if getattr(u, "_bi_subcategories", None):
@@ -264,15 +268,17 @@ def atualizar_usuario(user_id: int, payload: dict, db: Session = Depends(get_db)
 
         # Convert to dict with datetime serialization
         try:
+            from ti.services.users import _denormalize_sector
             if getattr(updated, "_setores", None):
                 raw = json.loads(updated._setores)
-                setores_list = [str(x) for x in raw if x is not None]
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
             elif getattr(updated, "setor", None):
-                setores_list = [str(updated.setor)]
+                setores_list = [_denormalize_sector(str(updated.setor))]
             else:
                 setores_list = []
         except Exception:
-            setores_list = [str(updated.setor)] if getattr(updated, "setor", None) else []
+            setores_list = [_denormalize_sector(str(updated.setor))] if getattr(updated, "setor", None) else []
 
         try:
             bi_subcategories_list = None
@@ -316,6 +322,45 @@ def atualizar_usuario(user_id: int, payload: dict, db: Session = Depends(get_db)
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar: {e}")
 
 
+@router.get("/{user_id}/debug-setores")
+def debug_user_setores(user_id: int, db: Session = Depends(get_db)):
+    """Debug endpoint to check what's actually in the database for a user's setores/permissions"""
+    try:
+        from ..models import User
+        from ..services.users import _denormalize_sector
+        User.__table__.create(bind=engine, checkfirst=True)
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {"error": f"User {user_id} not found"}
+
+        import json
+
+        setores_raw = getattr(user, "_setores", None)
+        setor_single = getattr(user, "setor", None)
+        setores_parsed = None
+        setores_denormalized = None
+
+        try:
+            if setores_raw:
+                setores_parsed = json.loads(setores_raw)
+                setores_denormalized = [_denormalize_sector(str(x)) for x in setores_parsed]
+        except Exception as e:
+            pass
+
+        return {
+            "user_id": user.id,
+            "usuario": user.usuario,
+            "user_name": f"{user.nome} {user.sobrenome}",
+            "_setores_raw_db": setores_raw,
+            "_setores_parsed": setores_parsed,
+            "_setores_denormalized": setores_denormalized,
+            "setor_single": setor_single,
+            "note": "Mostra o estado bruto e processado dos setores no banco"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @router.get("/{user_id}/debug-bi")
 def debug_user_bi(user_id: int, db: Session = Depends(get_db)):
     """Debug endpoint to check what's actually in the database for a user's BI permissions"""
@@ -351,6 +396,7 @@ def debug_user_bi(user_id: int, db: Session = Depends(get_db)):
 def get_usuario(user_id: int, db: Session = Depends(get_db)):
     try:
         from ..models import User
+        from ..services.users import _denormalize_sector
         import json
         User.__table__.create(bind=engine, checkfirst=True)
 
@@ -362,13 +408,14 @@ def get_usuario(user_id: int, db: Session = Depends(get_db)):
         try:
             if user._setores:
                 raw = json.loads(user._setores)
-                setores_list = [str(x) for x in raw if x is not None]
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
             elif user.setor:
-                setores_list = [str(user.setor)]
+                setores_list = [_denormalize_sector(str(user.setor))]
             else:
                 setores_list = []
         except Exception:
-            setores_list = [str(user.setor)] if user.setor else []
+            setores_list = [_denormalize_sector(str(user.setor))] if user.setor else []
 
         try:
             bi_subcategories_list = None
@@ -462,12 +509,14 @@ def force_logout(user_id: int, db: Session = Depends(get_db)):
         try:
             setores_list = []
             import json
+            from ti.services.users import _denormalize_sector
             if getattr(user, "_setores", None):
-                setores_list = [str(x) for x in json.loads(user._setores) if x is not None]
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in json.loads(user._setores) if x is not None]
             elif getattr(user, "setor", None):
-                setores_list = [str(user.setor)]
+                setores_list = [_denormalize_sector(str(user.setor))]
         except Exception:
-            setores_list = [str(user.setor)] if user.setor else []
+            setores_list = [_denormalize_sector(str(user.setor))] if user.setor else []
 
         # Ensure nome and sobrenome are non-empty strings
         user_nome = (user.nome or "").strip()
@@ -532,10 +581,13 @@ def auth0_login(payload: dict, db: Session = Depends(get_db)):
 
         # Preparar resposta com dados do usuário
         import json
+        from ti.services.users import _denormalize_sector
         setores_list = []
         if getattr(user, "_setores", None):
             try:
-                setores_list = json.loads(getattr(user, "_setores", "[]"))
+                raw = json.loads(getattr(user, "_setores", "[]"))
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
             except:
                 setores_list = []
 
@@ -603,10 +655,13 @@ def msal_login(payload: dict, db: Session = Depends(get_db)):
             )
 
         # Preparar resposta com dados do usuário
+        from ti.services.users import _denormalize_sector
         setores_list = []
         if getattr(user, "_setores", None):
             try:
-                setores_list = json.loads(getattr(user, "_setores", "[]"))
+                raw = json.loads(getattr(user, "_setores", "[]"))
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
             except:
                 setores_list = []
 
