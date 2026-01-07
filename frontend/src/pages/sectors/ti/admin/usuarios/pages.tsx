@@ -686,7 +686,44 @@ export function Permissoes() {
     setIsLoadingMore(false);
   }, [viewMode]);
 
-  const openEdit = (u: ApiUser) => {
+  const openEdit = async (u: ApiUser) => {
+    // Fetch fresh user data to ensure we have the latest permissions from database
+    try {
+      console.log("[MODAL] Buscando dados atualizados do usuário", u.id);
+      const res = await fetch(`/api/usuarios/${u.id}`);
+      if (res.ok) {
+        const freshUser = await res.json();
+        console.log("[MODAL] Dados atualizados recebidos:", freshUser);
+        setEditing(freshUser);
+        setEditNome(freshUser.nome);
+        setEditSobrenome(freshUser.sobrenome);
+        setEditEmail(freshUser.email);
+        setEditUsuario(freshUser.usuario);
+        setEditNivel(freshUser.nivel_acesso);
+
+        // Backend now returns setores with canonical titles (e.g., "Portal de TI")
+        // Just use them directly
+        if (freshUser.setores && Array.isArray(freshUser.setores) && freshUser.setores.length > 0) {
+          console.log("[MODAL] Permissões encontradas:", freshUser.setores);
+          setEditSetores(freshUser.setores.map((x: string) => String(x)));
+        } else if (freshUser.setor) {
+          console.log("[MODAL] Setor encontrado:", freshUser.setor);
+          setEditSetores([freshUser.setor]);
+        } else {
+          console.log("[MODAL] Nenhuma permissão encontrada");
+          setEditSetores([]);
+        }
+
+        setEditBiSubcategories(freshUser.bi_subcategories || []);
+        setEditForceReset(false);
+        return;
+      }
+    } catch (err) {
+      console.error("[MODAL] Erro ao buscar dados atualizados:", err);
+    }
+
+    // Fallback: use data already in memory if fetch fails
+    console.log("[MODAL] Usando dados em memória como fallback");
     setEditing(u);
     setEditNome(u.nome);
     setEditSobrenome(u.sobrenome);
@@ -694,16 +731,14 @@ export function Permissoes() {
     setEditUsuario(u.usuario);
     setEditNivel(u.nivel_acesso);
 
-    // Backend now returns setores with canonical titles (e.g., "Portal de TI")
-    // Just use them directly
     if (u.setores && Array.isArray(u.setores) && u.setores.length > 0) {
-      console.log("[MODAL] Abrindo edição de usuário", u.usuario, 'com setores:', u.setores);
+      console.log("[MODAL] Permissões em memória:", u.setores);
       setEditSetores(u.setores.map((x) => String(x)));
     } else if (u.setor) {
-      console.log("[MODAL] Abrindo edição de usuário", u.usuario, 'com setor:', u.setor);
+      console.log("[MODAL] Setor em memória:", u.setor);
       setEditSetores([u.setor]);
     } else {
-      console.log("[MODAL] Abrindo edição de usuário", u.usuario, 'sem setores');
+      console.log("[MODAL] Nenhuma permissão em memória");
       setEditSetores([]);
     }
 
