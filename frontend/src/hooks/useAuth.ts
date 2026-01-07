@@ -394,12 +394,22 @@ export function useAuth() {
         };
         console.debug(
           "[AUTH] ✓ Updating user state with new data (permissions changed)",
+          { bi_subcategories: newBiSubcategories },
         );
         setUser(base);
 
         try {
-          console.debug("[AUTH] Updating sessionStorage");
-          sessionStorage.setItem(AUTH_KEY, JSON.stringify(record));
+          console.debug("[AUTH] Updating sessionStorage with new data");
+          const recordJson = JSON.stringify(record);
+          sessionStorage.setItem(AUTH_KEY, recordJson);
+          console.debug("[AUTH] ✓ sessionStorage updated, verifying...");
+          const verify = sessionStorage.getItem(AUTH_KEY);
+          if (verify) {
+            const verified = JSON.parse(verify);
+            console.debug("[AUTH] ✓ Verified in sessionStorage:", {
+              bi_subcategories: verified.bi_subcategories,
+            });
+          }
         } catch (e) {
           console.error("[AUTH] Failed to update sessionStorage:", e);
         }
