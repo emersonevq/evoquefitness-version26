@@ -14,6 +14,22 @@ class UserCreate(BaseModel):
     alterar_senha_primeiro_acesso: bool = True
     bloqueado: bool = False
 
+class UserUpdate(BaseModel):
+    """Schema para atualizar usuário"""
+    nome: Optional[str] = None
+    sobrenome: Optional[str] = None
+    usuario: Optional[str] = None
+    email: Optional[str] = None  # Allow any string, validation happens in service layer
+    nivel_acesso: Optional[str] = None
+    setores: Optional[List[str]] = None
+    bi_subcategories: Optional[List[str]] = None
+    alterar_senha_primeiro_acesso: Optional[bool] = None
+    bloqueado: Optional[bool] = None
+
+    class Config:
+        # Allow extra fields and use by default populate_by_name
+        extra = "ignore"
+
 class UserOut(BaseModel):
     id: int
     nome: str
