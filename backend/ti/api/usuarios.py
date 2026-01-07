@@ -152,6 +152,7 @@ def listar_bloqueados(db: Session = Depends(get_db)):
     try:
         import json
         from ..models import User
+        from ..services.users import _denormalize_sector
         users = list_blocked_users(db)
         rows = []
         for u in users:
@@ -163,13 +164,14 @@ def listar_bloqueados(db: Session = Depends(get_db)):
             try:
                 if getattr(u, "_setores", None):
                     raw = json.loads(getattr(u, "_setores"))
-                    setores_list = [str(x) for x in raw if x is not None]
+                    # Denormalize back to canonical titles
+                    setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
                 elif getattr(u, "setor", None):
-                    setores_list = [str(getattr(u, "setor"))]
+                    setores_list = [_denormalize_sector(str(getattr(u, "setor")))]
                 else:
                     setores_list = []
             except Exception:
-                setores_list = [str(getattr(u, "setor"))] if getattr(u, "setor", None) else []
+                setores_list = [_denormalize_sector(str(getattr(u, "setor")))] if getattr(u, "setor", None) else []
             try:
                 bi_subcategories_list = None
                 if getattr(u, "_bi_subcategories", None):
