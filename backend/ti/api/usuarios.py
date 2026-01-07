@@ -566,9 +566,10 @@ def auth0_login(payload: dict, db: Session = Depends(get_db)):
         if not email:
             raise HTTPException(status_code=400, detail="Email não fornecido")
 
-        # Buscar usuário no banco pelo email
+        # Buscar usuário no banco pelo email (case-insensitive search)
         from ti.models import User
-        user = db.query(User).filter(User.email == email).first()
+        email_lower = email.lower() if email else None
+        user = db.query(User).filter(func.lower(User.email) == email_lower).first()
 
         if not user:
             raise HTTPException(
@@ -641,9 +642,10 @@ def msal_login(payload: dict, db: Session = Depends(get_db)):
         if not email:
             raise HTTPException(status_code=400, detail="Email não fornecido")
 
-        # Buscar usuário no banco pelo email
+        # Buscar usuário no banco pelo email (case-insensitive search)
         from ti.models import User
-        user = db.query(User).filter(User.email == email).first()
+        email_lower = email.lower() if email else None
+        user = db.query(User).filter(func.lower(User.email) == email_lower).first()
 
         if not user:
             raise HTTPException(
