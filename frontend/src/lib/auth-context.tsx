@@ -294,10 +294,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lastName = data.sobrenome || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
-      // Normalize bi_subcategories: ensure it's always an array, not null
+      // Keep bi_subcategories as is: null means no restriction (show all), array means restricted
       const normalizedBiSubcategories = Array.isArray(data.bi_subcategories)
         ? data.bi_subcategories
-        : [];
+        : null;
 
       const userData: User = {
         id: data.id,
@@ -529,10 +529,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lastName = data.sobrenome || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
-      // Normalize bi_subcategories: ensure it's always an array, not null
+      // Keep bi_subcategories as is: null means no restriction (show all), array means restricted
       const normalizedBiSubcategories = Array.isArray(data.bi_subcategories)
         ? data.bi_subcategories
-        : [];
+        : null;
 
       const userData: User = {
         id: data.id,
