@@ -354,6 +354,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.debug("[AUTH] ✓ Saved to sessionStorage, length:", authJson.length);
       console.debug("[AUTH] Verify sessionStorage:", sessionStorage.getItem("evoque-fitness-auth") ? "OK" : "FAIL");
 
+      // Mark that we need to sync permissions after mount
+      sessionStorage.setItem("__auth_needs_refresh__", "true");
+      console.debug("[AUTH] ✓ Marked for refresh after mount");
+
       // Attempt to identify on Socket.IO immediately after Auth0 login
       try {
         const socket = (window as any).__APP_SOCK__;
