@@ -693,19 +693,17 @@ export function Permissoes() {
     setEditEmail(u.email);
     setEditUsuario(u.usuario);
     setEditNivel(u.nivel_acesso);
-    // Store the original sector names without normalizing - match with sector titles
+
+    // Backend now returns setores with canonical titles (e.g., "Portal de TI")
+    // Just use them directly
     if (u.setores && Array.isArray(u.setores) && u.setores.length > 0) {
-      // Map normalized back to original titles from sectors data
-      setEditSetores(
-        u.setores.map((x) => {
-          const normalized = normalize(String(x));
-          const found = sectors.find((s) => normalize(s.title) === normalized);
-          return found ? found.title : String(x);
-        }),
-      );
+      setEditSetores(u.setores.map((x) => String(x)));
+    } else if (u.setor) {
+      setEditSetores([u.setor]);
     } else {
-      setEditSetores(u.setor ? [matchSectorTitle(u.setor) || u.setor] : []);
+      setEditSetores([]);
     }
+
     setEditBiSubcategories((u as any).bi_subcategories || []);
     setEditForceReset(false);
   };
