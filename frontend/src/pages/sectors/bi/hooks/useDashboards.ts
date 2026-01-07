@@ -31,6 +31,17 @@ export function useDashboards() {
   const isFetchingRef = useRef(false);
   const { user } = useAuth();
 
+  // Debug: Log user data on mount and when it changes
+  useEffect(() => {
+    console.log("[BI] 👤 useAuth user data updated:", {
+      id: user?.id,
+      email: user?.email,
+      bi_subcategories: user?.bi_subcategories,
+      bi_subcategories_type: typeof user?.bi_subcategories,
+      bi_subcategories_is_array: Array.isArray(user?.bi_subcategories),
+    });
+  }, [user?.id, user?.bi_subcategories?.join(",")]);
+
   useEffect(() => {
     const fetchDashboards = async () => {
       // Prevent multiple simultaneous fetches
