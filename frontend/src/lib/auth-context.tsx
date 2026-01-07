@@ -384,15 +384,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.debug("[AUTH] ✓ Redirecting to:", redirectUrl);
       console.log("[AUTH] ✓ Auth success, navigating to:", redirectUrl);
 
-      // Trigger auth:refresh event to force reload of permissions from backend
-      console.debug("[AUTH] Dispatching auth:refresh event to sync permissions from backend");
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("auth:refresh"));
-      }, 500); // Small delay to allow redirect to complete
-
       // Use setTimeout to ensure state update completes before navigation
       setTimeout(() => {
+        console.debug("[AUTH] Navigating to:", redirectUrl);
         navigate(redirectUrl, { replace: true });
+
+        // AFTER navigation starts, trigger auth:refresh event
+        // This ensures useAuth hooks are mounted and listening before event fires
+        setTimeout(() => {
+          console.debug("[AUTH] Dispatching auth:refresh event to sync permissions from backend");
+          window.dispatchEvent(new CustomEvent("auth:refresh"));
+        }, 100); // Small delay to ensure page is mounted and listeners registered
       }, 0);
     } catch (error) {
       console.error("[AUTH] ✗ Error handling Auth0 callback:", error);
