@@ -114,7 +114,10 @@ export function CriarUsuario() {
         return [...prev, name];
       }
     });
-    if (isSectorMatch(name, "Portal de BI") && !selSectors.some((s) => isSectorMatch(s, "Portal de BI"))) {
+    if (
+      isSectorMatch(name, "Portal de BI") &&
+      !selSectors.some((s) => isSectorMatch(s, "Portal de BI"))
+    ) {
       setSelBiSubcategories("");
     }
   };
@@ -188,7 +191,9 @@ export function CriarUsuario() {
     }
 
     // Validação: se tem setor BI, deve ter selecionado um dashboard
-    const hasBiSector = selSectors.some((s) => isSectorMatch(s, "Portal de BI"));
+    const hasBiSector = selSectors.some((s) =>
+      isSectorMatch(s, "Portal de BI"),
+    );
     if (hasBiSector && !selBiSubcategories) {
       alert(
         "⚠️ Você selecionou o setor Portal de BI mas não escolheu um dashboard. Por favor, selecione um dashboard ou desmarque o setor BI.",
@@ -352,7 +357,9 @@ export function CriarUsuario() {
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-border bg-background"
-                    checked={selSectors.some((selected) => isSectorMatch(selected, s))}
+                    checked={selSectors.some((selected) =>
+                      isSectorMatch(selected, s),
+                    )}
                     onChange={() => toggleSector(s)}
                   />
                   {s}
@@ -610,7 +617,9 @@ export function Permissoes() {
 
   const allSectors = useMemo(() => sectors.map((s) => s.title), []);
   const biSector = useMemo(() => sectors.find((s) => s.slug === "bi"), []);
-  const isEditBiSelected = editSetores.some((s) => isSectorMatch(s, "Portal de BI"));
+  const isEditBiSelected = editSetores.some((s) =>
+    isSectorMatch(s, "Portal de BI"),
+  );
 
   const toggleEditSector = (name: string) => {
     // Store the original sector title name
@@ -619,16 +628,29 @@ export function Permissoes() {
       if (isCurrentlySelected) {
         // Remove: filter out all sectors that match this name (normalized)
         const newSetores = prev.filter((s) => !isSectorMatch(s, name));
-        console.log("[CHECKBOX] ❌ Desmarcado:", name, "| Setores agora:", newSetores);
+        console.log(
+          "[CHECKBOX] ❌ Desmarcado:",
+          name,
+          "| Setores agora:",
+          newSetores,
+        );
         return newSetores;
       } else {
         // Add: add the correct canonical name
         const newSetores = [...prev, name];
-        console.log("[CHECKBOX] ✅ Marcado:", name, "| Setores agora:", newSetores);
+        console.log(
+          "[CHECKBOX] ✅ Marcado:",
+          name,
+          "| Setores agora:",
+          newSetores,
+        );
         return newSetores;
       }
     });
-    if (isSectorMatch(name, "Portal de BI") && !editSetores.some((s) => isSectorMatch(s, "Portal de BI"))) {
+    if (
+      isSectorMatch(name, "Portal de BI") &&
+      !editSetores.some((s) => isSectorMatch(s, "Portal de BI"))
+    ) {
       setEditBiSubcategories([]);
     }
   };
@@ -648,11 +670,20 @@ export function Permissoes() {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
       .then((data: ApiUser[]) => {
         if (Array.isArray(data)) {
-          console.log("[ADMIN] ✅ Lista carregada com", data.length, "usuários");
+          console.log(
+            "[ADMIN] ✅ Lista carregada com",
+            data.length,
+            "usuários",
+          );
           // Log the setores for the first user with permissions (for debugging)
-          const usersWithSetores = data.filter((u) => u.setores && u.setores.length > 0);
+          const usersWithSetores = data.filter(
+            (u) => u.setores && u.setores.length > 0,
+          );
           if (usersWithSetores.length > 0) {
-            console.log("[ADMIN] ℹ️  Exemplo de usuário com setores:", usersWithSetores[0]);
+            console.log(
+              "[ADMIN] ℹ️  Exemplo de usuário com setores:",
+              usersWithSetores[0],
+            );
           }
           setUsers(data.filter((u) => !u.bloqueado));
         }
@@ -705,7 +736,12 @@ export function Permissoes() {
   const openEdit = async (u: ApiUser) => {
     // Fetch fresh user data to ensure we have the latest permissions from database
     try {
-      console.log("[MODAL] 🔄 Abrindo edição - buscando dados atualizados do usuário ID:", u.id, "Usuario:", u.usuario);
+      console.log(
+        "[MODAL] 🔄 Abrindo edição - buscando dados atualizados do usuário ID:",
+        u.id,
+        "Usuario:",
+        u.usuario,
+      );
       const res = await fetch(`/api/usuarios/${u.id}`);
       console.log("[MODAL] 📡 Resposta da API - Status:", res.status);
 
@@ -717,7 +753,7 @@ export function Permissoes() {
           usuario: freshUser.usuario,
           setores: freshUser.setores,
           setor: freshUser.setor,
-          bi_subcategories: freshUser.bi_subcategories
+          bi_subcategories: freshUser.bi_subcategories,
         });
 
         setEditing(freshUser);
@@ -729,14 +765,26 @@ export function Permissoes() {
 
         // Backend now returns setores with canonical titles (e.g., "Portal de TI")
         // Just use them directly
-        if (freshUser.setores && Array.isArray(freshUser.setores) && freshUser.setores.length > 0) {
-          console.log("[MODAL] ✅ Permissões ENCONTRADAS no servidor:", freshUser.setores);
+        if (
+          freshUser.setores &&
+          Array.isArray(freshUser.setores) &&
+          freshUser.setores.length > 0
+        ) {
+          console.log(
+            "[MODAL] ✅ Permissões ENCONTRADAS no servidor:",
+            freshUser.setores,
+          );
           setEditSetores(freshUser.setores.map((x: string) => String(x)));
         } else if (freshUser.setor) {
-          console.log("[MODAL] ⚠️  Usando setor único do servidor:", freshUser.setor);
+          console.log(
+            "[MODAL] ⚠️  Usando setor único do servidor:",
+            freshUser.setor,
+          );
           setEditSetores([freshUser.setor]);
         } else {
-          console.log("[MODAL] ⚠️  NENHUMA PERMISSÃO NO SERVIDOR - Array vazio");
+          console.log(
+            "[MODAL] ⚠️  NENHUMA PERMISSÃO NO SERVIDOR - Array vazio",
+          );
           setEditSetores([]);
         }
 
@@ -778,7 +826,9 @@ export function Permissoes() {
     if (!editing) return;
 
     // Validação: se tem setor BI, deve ter pelo menos um dashboard selecionado
-    const hasBiSector = editSetores.some((s) => isSectorMatch(s, "Portal de BI"));
+    const hasBiSector = editSetores.some((s) =>
+      isSectorMatch(s, "Portal de BI"),
+    );
     if (
       hasBiSector &&
       (!editBiSubcategories || editBiSubcategories.length === 0)
@@ -807,7 +857,10 @@ export function Permissoes() {
       editing.usuario,
     );
     console.log("[ADMIN] 📝 Setores a salvar:", editSetores);
-    console.log("[ADMIN] 📝 Payload completo:", JSON.stringify(payload, null, 2));
+    console.log(
+      "[ADMIN] 📝 Payload completo:",
+      JSON.stringify(payload, null, 2),
+    );
 
     const res = await fetch(`/api/usuarios/${editing.id}`, {
       method: "PUT",
@@ -820,16 +873,27 @@ export function Permissoes() {
     if (res.ok) {
       const responseData = await res.json();
       console.log("[ADMIN] ✅ User updated successfully");
-      console.log("[ADMIN] ✅ Setores retornados do servidor:", responseData.setores);
+      console.log(
+        "[ADMIN] ✅ Setores retornados do servidor:",
+        responseData.setores,
+      );
       console.log("[ADMIN] ✅ Setor único retornado:", responseData.setor);
 
       // Verify that setores were actually saved
       if (!responseData.setores || responseData.setores.length === 0) {
-        console.error("[ADMIN] ⚠️  PROBLEMA DETECTADO: Servidor retornou setores vazio!");
-        console.error("[ADMIN] Payload que foi enviado:", JSON.stringify(payload, null, 2));
+        console.error(
+          "[ADMIN] ⚠️  PROBLEMA DETECTADO: Servidor retornou setores vazio!",
+        );
+        console.error(
+          "[ADMIN] Payload que foi enviado:",
+          JSON.stringify(payload, null, 2),
+        );
       }
 
-      console.log("[ADMIN] ✅ Full response:", JSON.stringify(responseData, null, 2));
+      console.log(
+        "[ADMIN] ✅ Full response:",
+        JSON.stringify(responseData, null, 2),
+      );
       setEditing(null);
       load();
 
@@ -1245,7 +1309,9 @@ export function Permissoes() {
                       <input
                         type="checkbox"
                         className="h-4 w-4 rounded border-border bg-background"
-                        checked={editSetores.some((selected) => isSectorMatch(selected, s))}
+                        checked={editSetores.some((selected) =>
+                          isSectorMatch(selected, s),
+                        )}
                         onChange={() => toggleEditSector(s)}
                       />
                       <span>{s}</span>
