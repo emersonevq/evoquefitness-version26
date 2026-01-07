@@ -71,7 +71,8 @@ def criar_usuario(db: Session, payload: UserCreate) -> UserCreatedOut:
         setor = normalized[0]
 
     bi_subcategories_json = None
-    if payload.bi_subcategories and len(payload.bi_subcategories) > 0:
+    if payload.bi_subcategories is not None:
+        # Array can be empty (no dashboards) or have items
         bi_subcategories_json = json.dumps(payload.bi_subcategories)
 
     auth0_user = None
