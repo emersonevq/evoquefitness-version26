@@ -136,11 +136,28 @@ def criar_usuario(db: Session, payload: UserCreate) -> UserCreatedOut:
 import unicodedata
 
 # Canonical sector titles that must match the frontend's sectors.ts
+# Supports both legacy ("TI") and current ("Portal de TI") naming conventions
 SECTOR_CANONICAL_MAP = {
+    # TI Sector - Legacy and current formats
+    "ti": "Portal de TI",
     "portal de ti": "Portal de TI",
+    "setor de ti": "Portal de TI",
+    # Financial Sector
+    "financeiro": "Portal Financeiro",
     "portal financeiro": "Portal Financeiro",
+    "portal de financeiro": "Portal Financeiro",
+    "setor financeiro": "Portal Financeiro",
+    # Maintenance Sector
+    "manutencao": "Portal de Manutenção",
+    "manutençao": "Portal de Manutenção",
     "portal de manutencao": "Portal de Manutenção",
+    "portal de manutençao": "Portal de Manutenção",
+    "setor de manutencao": "Portal de Manutenção",
+    # BI Sector
+    "bi": "Portal de BI",
     "portal de bi": "Portal de BI",
+    "portal bi": "Portal de BI",
+    "setor de bi": "Portal de BI",
 }
 
 def _normalize_str(s: str) -> str:
