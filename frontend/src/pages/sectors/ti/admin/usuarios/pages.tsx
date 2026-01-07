@@ -639,12 +639,24 @@ export function Permissoes() {
 
   const load = () => {
     setLoading(true);
+    console.log("[ADMIN] 📋 Recarregando lista de usuários...");
     fetch("/api/usuarios")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
       .then((data: ApiUser[]) => {
-        if (Array.isArray(data)) setUsers(data.filter((u) => !u.bloqueado));
+        if (Array.isArray(data)) {
+          console.log("[ADMIN] ✅ Lista carregada com", data.length, "usuários");
+          // Log the setores for the first user with permissions (for debugging)
+          const usersWithSetores = data.filter((u) => u.setores && u.setores.length > 0);
+          if (usersWithSetores.length > 0) {
+            console.log("[ADMIN] ℹ️  Exemplo de usuário com setores:", usersWithSetores[0]);
+          }
+          setUsers(data.filter((u) => !u.bloqueado));
+        }
       })
-      .catch(() => setUsers([]))
+      .catch((err) => {
+        console.error("[ADMIN] ❌ Erro ao carregar usuários:", err);
+        setUsers([]);
+      })
       .finally(() => setLoading(false));
   };
 
