@@ -37,9 +37,11 @@ def check_user_availability(db: Session, email: str | None = None, username: str
         User.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
+    from sqlalchemy import func
     availability = UserAvailability()
     if email is not None:
-        availability.email_exists = db.query(User).filter(User.email == email).first() is not None
+        # Email check is case-insensitive
+        availability.email_exists = db.query(User).filter(func.lower(User.email) == email.lower()).first() is not None
     if username is not None:
         availability.usuario_exists = db.query(User).filter(User.usuario == username).first() is not None
     return availability
