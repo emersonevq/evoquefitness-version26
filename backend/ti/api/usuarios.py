@@ -817,7 +817,8 @@ def reset_password_by_email(payload: dict, db: Session = Depends(get_db)):
         if not email:
             raise HTTPException(status_code=400, detail="Email não fornecido")
 
-        user = db.query(User).filter(User.email == email).first()
+        email_lower = email.lower() if email else None
+        user = db.query(User).filter(func.lower(User.email) == email_lower).first()
         if not user:
             raise HTTPException(status_code=404, detail=f"Usuário com email '{email}' não encontrado")
 
