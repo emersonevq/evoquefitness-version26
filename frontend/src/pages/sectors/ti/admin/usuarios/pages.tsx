@@ -701,11 +701,21 @@ export function Permissoes() {
   const openEdit = async (u: ApiUser) => {
     // Fetch fresh user data to ensure we have the latest permissions from database
     try {
-      console.log("[MODAL] Buscando dados atualizados do usuário", u.id);
+      console.log("[MODAL] 🔄 Abrindo edição - buscando dados atualizados do usuário ID:", u.id, "Usuario:", u.usuario);
       const res = await fetch(`/api/usuarios/${u.id}`);
+      console.log("[MODAL] 📡 Resposta da API - Status:", res.status);
+
       if (res.ok) {
         const freshUser = await res.json();
-        console.log("[MODAL] Dados atualizados recebidos:", freshUser);
+        console.log("[MODAL] ✅ Dados atualizados recebidos do servidor");
+        console.log("[MODAL] 📊 Dados do usuario:", {
+          id: freshUser.id,
+          usuario: freshUser.usuario,
+          setores: freshUser.setores,
+          setor: freshUser.setor,
+          bi_subcategories: freshUser.bi_subcategories
+        });
+
         setEditing(freshUser);
         setEditNome(freshUser.nome);
         setEditSobrenome(freshUser.sobrenome);
@@ -716,26 +726,28 @@ export function Permissoes() {
         // Backend now returns setores with canonical titles (e.g., "Portal de TI")
         // Just use them directly
         if (freshUser.setores && Array.isArray(freshUser.setores) && freshUser.setores.length > 0) {
-          console.log("[MODAL] Permissões encontradas:", freshUser.setores);
+          console.log("[MODAL] ✅ Permissões ENCONTRADAS no servidor:", freshUser.setores);
           setEditSetores(freshUser.setores.map((x: string) => String(x)));
         } else if (freshUser.setor) {
-          console.log("[MODAL] Setor encontrado:", freshUser.setor);
+          console.log("[MODAL] ⚠️  Usando setor único do servidor:", freshUser.setor);
           setEditSetores([freshUser.setor]);
         } else {
-          console.log("[MODAL] Nenhuma permissão encontrada");
+          console.log("[MODAL] ⚠️  NENHUMA PERMISSÃO NO SERVIDOR - Array vazio");
           setEditSetores([]);
         }
 
         setEditBiSubcategories(freshUser.bi_subcategories || []);
         setEditForceReset(false);
         return;
+      } else {
+        console.error("[MODAL] ❌ Erro na resposta - Status:", res.status);
       }
     } catch (err) {
-      console.error("[MODAL] Erro ao buscar dados atualizados:", err);
+      console.error("[MODAL] ❌ Erro ao buscar dados atualizados:", err);
     }
 
     // Fallback: use data already in memory if fetch fails
-    console.log("[MODAL] Usando dados em memória como fallback");
+    console.log("[MODAL] ⚠️  Usando dados em memória como fallback");
     setEditing(u);
     setEditNome(u.nome);
     setEditSobrenome(u.sobrenome);
