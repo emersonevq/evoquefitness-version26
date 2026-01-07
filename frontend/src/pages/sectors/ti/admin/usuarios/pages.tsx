@@ -618,10 +618,14 @@ export function Permissoes() {
       const isCurrentlySelected = prev.some((s) => isSectorMatch(s, name));
       if (isCurrentlySelected) {
         // Remove: filter out all sectors that match this name (normalized)
-        return prev.filter((s) => !isSectorMatch(s, name));
+        const newSetores = prev.filter((s) => !isSectorMatch(s, name));
+        console.log("[CHECKBOX] ❌ Desmarcado:", name, "| Setores agora:", newSetores);
+        return newSetores;
       } else {
         // Add: add the correct canonical name
-        return [...prev, name];
+        const newSetores = [...prev, name];
+        console.log("[CHECKBOX] ✅ Marcado:", name, "| Setores agora:", newSetores);
+        return newSetores;
       }
     });
     if (isSectorMatch(name, "Portal de BI") && !editSetores.some((s) => isSectorMatch(s, "Portal de BI"))) {
