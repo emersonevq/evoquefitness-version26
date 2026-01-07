@@ -87,6 +87,17 @@ export function useDashboards() {
         // Filter dashboards based on user permissions
         let filteredDashboards = dashboards;
 
+        console.log("[BI] 🔍 Filtragem de dashboards:", {
+          user_id: user?.id,
+          user_email: user?.email,
+          bi_subcategories: user?.bi_subcategories,
+          bi_subcategories_type: typeof user?.bi_subcategories,
+          bi_subcategories_is_null: user?.bi_subcategories === null,
+          bi_subcategories_is_array: Array.isArray(user?.bi_subcategories),
+          bi_subcategories_length: Array.isArray(user?.bi_subcategories) ? user.bi_subcategories.length : "N/A",
+          total_dashboards_available: dashboards.length,
+        });
+
         if (user && user.bi_subcategories !== null && user.bi_subcategories !== undefined) {
           // User has bi_subcategories explicitly set (array, even if empty)
           if (Array.isArray(user.bi_subcategories) && user.bi_subcategories.length > 0) {
