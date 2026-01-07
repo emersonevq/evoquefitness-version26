@@ -353,6 +353,12 @@ export function useAuth() {
           JSON.stringify(oldBiSubcategories.slice().sort()) !==
           JSON.stringify(newBiSubcategories.slice().sort());
 
+        console.debug("[AUTH] BI Subcategories comparison:", {
+          old: oldBiSubcategories,
+          new: newBiSubcategories,
+          changed: biSubcategoriesChanged,
+        });
+
         if (biSubcategoriesChanged) {
           console.log(
             "[AUTH] ✓ BI_SUBCATEGORIES CHANGED:",
