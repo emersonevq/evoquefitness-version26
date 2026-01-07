@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel
 from core.db import get_db
 from auth0.validator import verify_auth0_token
@@ -180,9 +181,10 @@ def auth0_exchange(request: Auth0ExchangeRequest, db: Session = Depends(get_db))
         if not email_verified:
             print(f"[AUTH0-EXCHANGE] ⚠️  Email not verified, but AUTH0_REQUIRE_EMAIL_VERIFIED is False - allowing login")
 
-        # Find user in database
+        # Find user in database (case-insensitive search for email)
         print(f"[AUTH0-EXCHANGE] Looking up user by email: {email}")
-        user = db.query(User).filter(User.email == email).first()
+        email_lower = email.lower() if email else None
+        user = db.query(User).filter(func.lower(User.email) == email_lower).first()
 
         if not user:
             print(f"[AUTH0-EXCHANGE] ✗ User not found in database")
