@@ -247,6 +247,7 @@ def auth0_exchange(request: Auth0ExchangeRequest, db: Session = Depends(get_db))
         print(f"[AUTH0-EXCHANGE]   - Name: {response['nome']} {response['sobrenome']}")
         print(f"[AUTH0-EXCHANGE]   - Email: {response['email']}")
         print(f"[AUTH0-EXCHANGE]   - Access level: {response['nivel_acesso']}")
+        print(f"[AUTH0-EXCHANGE]   - BI Subcategories: {response['bi_subcategories']}")
         print(f"[AUTH0-EXCHANGE]   - Access token (first 30 chars): {response['access_token'][:30]}...")
         print(f"{'='*60}\n")
 
