@@ -372,7 +372,11 @@ def authenticate_user(db: Session, identifier: str, senha: str) -> dict:
         if user._bi_subcategories:
             raw = json.loads(user._bi_subcategories)
             bi_subcategories_list = [str(x) if x is not None else "" for x in raw]
-    except Exception:
+            print(f"[AUTH] bi_subcategories loaded: raw='{user._bi_subcategories}' parsed={bi_subcategories_list}")
+        else:
+            print(f"[AUTH] user._bi_subcategories is empty/null: {repr(user._bi_subcategories)}")
+    except Exception as e:
+        print(f"[AUTH] Error parsing bi_subcategories: {e}")
         bi_subcategories_list = None
 
     # Ensure nome and sobrenome are never empty strings
