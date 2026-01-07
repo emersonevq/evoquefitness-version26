@@ -773,11 +773,13 @@ export function Permissoes() {
     };
 
     console.log(
-      "[ADMIN] Salvando usuário",
+      "[ADMIN] 📝 Salvando usuário ID",
       editing.id,
-      "com payload:",
-      payload,
+      "Usuario:",
+      editing.usuario,
     );
+    console.log("[ADMIN] 📝 Setores a salvar:", editSetores);
+    console.log("[ADMIN] 📝 Payload completo:", JSON.stringify(payload, null, 2));
 
     const res = await fetch(`/api/usuarios/${editing.id}`, {
       method: "PUT",
@@ -785,15 +787,13 @@ export function Permissoes() {
       body: JSON.stringify(payload),
     });
 
-    console.log("[ADMIN] Response status:", res.status);
+    console.log("[ADMIN] 📡 Response status:", res.status);
 
     if (res.ok) {
       const responseData = await res.json();
-      console.log("[ADMIN] User updated successfully, response:", responseData);
-      console.log(
-        "[ADMIN] bi_subcategories saved as:",
-        responseData.bi_subcategories,
-      );
+      console.log("[ADMIN] ✅ User updated successfully");
+      console.log("[ADMIN] ✅ Setores retornados do servidor:", responseData.setores);
+      console.log("[ADMIN] ✅ Full response:", JSON.stringify(responseData, null, 2));
       setEditing(null);
       load();
 
