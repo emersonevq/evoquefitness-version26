@@ -96,11 +96,12 @@ export function useDashboards() {
             filteredDashboards = [];
           }
         } else {
-          // User doesn't have bi_subcategories defined - show all (backward compatible)
+          // User doesn't have bi_subcategories defined or it's null/undefined - deny access
+          // This prevents showing all dashboards to users who shouldn't have access
           console.log(
-            "[BI] 📚 Usuário sem restrições de BI - mostrando todos os dashboards",
+            "[BI] 🔒 Usuário sem permissões de BI definidas - acesso negado",
           );
-          filteredDashboards = dashboards;
+          filteredDashboards = [];
         }
 
         // Group dashboards by category
