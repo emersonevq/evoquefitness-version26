@@ -540,10 +540,13 @@ def auth0_login(payload: dict, db: Session = Depends(get_db)):
 
         # Preparar resposta com dados do usuário
         import json
+        from ti.services.users import _denormalize_sector
         setores_list = []
         if getattr(user, "_setores", None):
             try:
-                setores_list = json.loads(getattr(user, "_setores", "[]"))
+                raw = json.loads(getattr(user, "_setores", "[]"))
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
             except:
                 setores_list = []
 
