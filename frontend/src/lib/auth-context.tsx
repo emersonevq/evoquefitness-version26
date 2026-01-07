@@ -277,6 +277,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.debug("[AUTH] ✓ Exchange successful, got user data");
       console.debug("[AUTH] User email:", data.email);
       console.debug("[AUTH] User level:", data.nivel_acesso);
+      console.debug(
+        "[AUTH] BI Subcategories from backend:",
+        data.bi_subcategories,
+      );
 
       if (!data.email) {
         throw new Error("Email not found in response");
@@ -290,6 +294,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lastName = data.sobrenome || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
+      // Normalize bi_subcategories: ensure it's always an array, not null
+      const normalizedBiSubcategories = Array.isArray(data.bi_subcategories)
+        ? data.bi_subcategories
+        : [];
+
       const userData: User = {
         id: data.id,
         email: data.email,
@@ -298,9 +307,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastName: lastName,
         nivel_acesso: data.nivel_acesso,
         setores: Array.isArray(data.setores) ? data.setores : [],
-        bi_subcategories: Array.isArray(data.bi_subcategories)
-          ? data.bi_subcategories
-          : null,
+        bi_subcategories: normalizedBiSubcategories,
         loginTime: now,
       };
 
@@ -338,9 +345,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set user in state
       setUser(userData);
       console.debug("[AUTH] ✓ User state updated");
+      console.debug("[AUTH] User data being saved:", {
+        id: userData.id,
+        email: userData.email,
+        bi_subcategories: userData.bi_subcategories,
+      });
 
       // Store user data in sessionStorage
-      sessionStorage.setItem("evoque-fitness-auth", JSON.stringify(userData));
+      const authJson = JSON.stringify(userData);
+      sessionStorage.setItem("evoque-fitness-auth", authJson);
+      console.debug(
+        "[AUTH] ✓ Saved to sessionStorage, length:",
+        authJson.length,
+      );
+      console.debug(
+        "[AUTH] Verify sessionStorage:",
+        sessionStorage.getItem("evoque-fitness-auth") ? "OK" : "FAIL",
+      );
+
+      // Mark that we need to sync permissions after mount
+      sessionStorage.setItem("__auth_needs_refresh__", "true");
+      console.debug("[AUTH] ✓ Marked for refresh after mount");
 
       // Attempt to identify on Socket.IO immediately after Auth0 login
       try {
@@ -374,7 +399,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Use setTimeout to ensure state update completes before navigation
       setTimeout(() => {
+        console.debug("[AUTH] Navigating to:", redirectUrl);
         navigate(redirectUrl, { replace: true });
+
+        // AFTER navigation starts, trigger auth:refresh event
+        // This ensures useAuth hooks are mounted and listening before event fires
+        setTimeout(() => {
+          console.debug(
+            "[AUTH] Dispatching auth:refresh event to sync permissions from backend",
+          );
+          window.dispatchEvent(new CustomEvent("auth:refresh"));
+        }, 100); // Small delay to ensure page is mounted and listeners registered
       }, 0);
     } catch (error) {
       console.error("[AUTH] ✗ Error handling Auth0 callback:", error);
@@ -443,6 +478,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userDataRaw) {
         try {
           const userData = JSON.parse(userDataRaw) as User;
+          // Normalize bi_subcategories when restoring from storage
+          if (!Array.isArray(userData.bi_subcategories)) {
+            userData.bi_subcategories = [];
+          }
           setUser(userData);
           console.debug("[AUTH] ✓ Session restored from sessionStorage");
           return true;
@@ -490,6 +529,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lastName = data.sobrenome || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
+      // Normalize bi_subcategories: ensure it's always an array, not null
+      const normalizedBiSubcategories = Array.isArray(data.bi_subcategories)
+        ? data.bi_subcategories
+        : [];
+
       const userData: User = {
         id: data.id,
         email: data.email,
@@ -498,14 +542,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastName: lastName,
         nivel_acesso: data.nivel_acesso,
         setores: Array.isArray(data.setores) ? data.setores : [],
-        bi_subcategories: Array.isArray(data.bi_subcategories)
-          ? data.bi_subcategories
-          : null,
+        bi_subcategories: normalizedBiSubcategories,
         loginTime: now,
       };
 
+      console.debug(
+        "[AUTH] Password login - BI Subcategories from backend:",
+        data.bi_subcategories,
+      );
+      console.debug(
+        "[AUTH] Password login - Normalized BI Subcategories:",
+        normalizedBiSubcategories,
+      );
+
       setUser(userData);
-      sessionStorage.setItem("evoque-fitness-auth", JSON.stringify(userData));
+      const authJson = JSON.stringify(userData);
+      sessionStorage.setItem("evoque-fitness-auth", authJson);
+      console.debug(
+        "[AUTH] ✓ Password login - Saved to sessionStorage, length:",
+        authJson.length,
+      );
+
+      // Trigger auth:refresh event to force reload of permissions from backend
+      console.debug(
+        "[AUTH] Dispatching auth:refresh event to sync permissions from backend",
+      );
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("auth:refresh"));
+      }, 500); // Small delay to allow state to settle
 
       return {
         ...data,
