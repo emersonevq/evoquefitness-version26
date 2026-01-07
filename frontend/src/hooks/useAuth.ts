@@ -54,6 +54,10 @@ function readFromStorage(): AuthUser | null {
             alterar_senha_primeiro_acesso,
             id,
           } = data as AuthRecord & Partial<AuthUser>;
+          // Normalize bi_subcategories: ensure it's always an array
+          const normalizedBiSubcategories = Array.isArray(bi_subcategories)
+            ? bi_subcategories
+            : [];
           return {
             id,
             email,
@@ -61,7 +65,7 @@ function readFromStorage(): AuthUser | null {
             loginTime,
             nivel_acesso,
             setores,
-            bi_subcategories,
+            bi_subcategories: normalizedBiSubcategories,
             alterar_senha_primeiro_acesso,
           } as AuthUser;
         }
@@ -79,6 +83,10 @@ function readFromStorage(): AuthUser | null {
             alterar_senha_primeiro_acesso,
             id,
           } = data as AuthUser & Partial<AuthRecord>;
+          // Normalize bi_subcategories: ensure it's always an array
+          const normalizedBiSubcategories = Array.isArray(bi_subcategories)
+            ? bi_subcategories
+            : [];
           return {
             id,
             email,
@@ -86,7 +94,7 @@ function readFromStorage(): AuthUser | null {
             loginTime,
             nivel_acesso,
             setores,
-            bi_subcategories,
+            bi_subcategories: normalizedBiSubcategories,
             alterar_senha_primeiro_acesso,
           } as AuthUser;
         }
