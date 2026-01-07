@@ -537,6 +537,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.setItem("evoque-fitness-auth", authJson);
       console.debug("[AUTH] ✓ Password login - Saved to sessionStorage, length:", authJson.length);
 
+      // Trigger auth:refresh event to force reload of permissions from backend
+      console.debug("[AUTH] Dispatching auth:refresh event to sync permissions from backend");
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("auth:refresh"));
+      }, 500); // Small delay to allow state to settle
+
       return {
         ...data,
         alterar_senha_primeiro_acesso:
