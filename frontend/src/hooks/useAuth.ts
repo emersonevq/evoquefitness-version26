@@ -37,6 +37,18 @@ function readFromStorage(): AuthUser | null {
 
   // Read only from sessionStorage (NO localStorage)
   const sessionRaw = sessionStorage.getItem(AUTH_KEY);
+  console.debug("[AUTH-STORE] Reading from sessionStorage key:", AUTH_KEY);
+  if (sessionRaw) {
+    console.debug("[AUTH-STORE] Raw data length:", sessionRaw.length);
+    try {
+      const parsed = JSON.parse(sessionRaw);
+      console.debug("[AUTH-STORE] Parsed data bi_subcategories:", parsed.bi_subcategories);
+    } catch (e) {
+      console.debug("[AUTH-STORE] Failed to parse for logging:", e);
+    }
+  } else {
+    console.debug("[AUTH-STORE] No data found in sessionStorage");
+  }
   if (sessionRaw) {
     try {
       const data = JSON.parse(sessionRaw) as Partial<AuthRecord & AuthUser>;
