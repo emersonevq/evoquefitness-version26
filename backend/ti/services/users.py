@@ -137,6 +137,7 @@ import unicodedata
 
 # Canonical sector titles that must match the frontend's sectors.ts
 SECTOR_CANONICAL_MAP = {
+    "ti": "Portal de TI",  # Legacy permission from old portal
     "portal de ti": "Portal de TI",
     "portal financeiro": "Portal Financeiro",
     "portal de manutencao": "Portal de Manutenção",
