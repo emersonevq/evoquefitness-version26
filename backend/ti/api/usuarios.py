@@ -215,7 +215,7 @@ def atualizar_usuario(user_id: int, payload: UserUpdate = Body(...), db: Session
         if "bi_subcategories" in payload_dict:
             print(f"[API] bi_subcategories in payload: {payload_dict['bi_subcategories']}")
 
-        updated = update_user(db, user_id, payload)
+        updated = update_user(db, user_id, payload_dict)
         print(f"[API] User updated successfully, new setores={getattr(updated, '_setores', 'N/A')}")
         print(f"[API] User updated successfully, new _bi_subcategories={getattr(updated, '_bi_subcategories', 'N/A')}")
 
