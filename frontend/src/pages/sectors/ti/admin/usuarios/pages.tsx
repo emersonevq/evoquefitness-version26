@@ -697,10 +697,13 @@ export function Permissoes() {
     // Backend now returns setores with canonical titles (e.g., "Portal de TI")
     // Just use them directly
     if (u.setores && Array.isArray(u.setores) && u.setores.length > 0) {
+      console.log("[MODAL] Abrindo edição de usuário", u.usuario, 'com setores:', u.setores);
       setEditSetores(u.setores.map((x) => String(x)));
     } else if (u.setor) {
+      console.log("[MODAL] Abrindo edição de usuário", u.usuario, 'com setor:', u.setor);
       setEditSetores([u.setor]);
     } else {
+      console.log("[MODAL] Abrindo edição de usuário", u.usuario, 'sem setores');
       setEditSetores([]);
     }
 
