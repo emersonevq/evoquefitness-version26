@@ -357,6 +357,7 @@ def debug_user_bi(user_id: int, db: Session = Depends(get_db)):
 def get_usuario(user_id: int, db: Session = Depends(get_db)):
     try:
         from ..models import User
+        from ..services.users import _denormalize_sector
         import json
         User.__table__.create(bind=engine, checkfirst=True)
 
@@ -368,13 +369,14 @@ def get_usuario(user_id: int, db: Session = Depends(get_db)):
         try:
             if user._setores:
                 raw = json.loads(user._setores)
-                setores_list = [str(x) for x in raw if x is not None]
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
             elif user.setor:
-                setores_list = [str(user.setor)]
+                setores_list = [_denormalize_sector(str(user.setor))]
             else:
                 setores_list = []
         except Exception:
-            setores_list = [str(user.setor)] if user.setor else []
+            setores_list = [_denormalize_sector(str(user.setor))] if user.setor else []
 
         try:
             bi_subcategories_list = None
