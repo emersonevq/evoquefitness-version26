@@ -42,7 +42,10 @@ function readFromStorage(): AuthUser | null {
     console.debug("[AUTH-STORE] Raw data length:", sessionRaw.length);
     try {
       const parsed = JSON.parse(sessionRaw);
-      console.debug("[AUTH-STORE] Parsed data bi_subcategories:", parsed.bi_subcategories);
+      console.debug(
+        "[AUTH-STORE] Parsed data bi_subcategories:",
+        parsed.bi_subcategories,
+      );
     } catch (e) {
       console.debug("[AUTH-STORE] Failed to parse for logging:", e);
     }
@@ -135,7 +138,9 @@ export function useAuth() {
     // Check if we need to refresh permissions after login
     const needsRefresh = sessionStorage.getItem("__auth_needs_refresh__");
     if (needsRefresh === "true") {
-      console.debug("[AUTH] Found __auth_needs_refresh__ flag - will trigger refresh after mount");
+      console.debug(
+        "[AUTH] Found __auth_needs_refresh__ flag - will trigger refresh after mount",
+      );
     }
 
     // Socket.IO connection (shared on window so multiple imports don't recreate)
@@ -221,10 +226,7 @@ export function useAuth() {
 
         // Server-side permission/profile update for this user
         socket.on("auth:refresh", (data: any) => {
-          console.log(
-            "[SIO] 🔔 Received auth:refresh event from server",
-            data,
-          );
+          console.log("[SIO] 🔔 Received auth:refresh event from server", data);
           try {
             const uid = data?.user_id;
             const curr = readFromStorage();
@@ -295,7 +297,10 @@ export function useAuth() {
         const current = readFromStorage();
         if (!current || !current.id) return;
         console.debug("[AUTH] ⟳ Refreshing user data for id", current.id);
-        console.debug("[AUTH] Current bi_subcategories before refresh:", current.bi_subcategories);
+        console.debug(
+          "[AUTH] Current bi_subcategories before refresh:",
+          current.bi_subcategories,
+        );
         permissionDebugger.log(
           "api",
           `Fetching updated user data from /api/usuarios/${current.id}`,
@@ -310,7 +315,10 @@ export function useAuth() {
           return;
         }
         const data = await res.json();
-        console.debug("[AUTH] ✓ Refresh response bi_subcategories:", data.bi_subcategories);
+        console.debug(
+          "[AUTH] ✓ Refresh response bi_subcategories:",
+          data.bi_subcategories,
+        );
         const now = Date.now();
         const oldSetores = (current.setores || []).slice().sort();
         const newSetores = (Array.isArray(data.setores) ? data.setores : [])

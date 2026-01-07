@@ -277,7 +277,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.debug("[AUTH] ✓ Exchange successful, got user data");
       console.debug("[AUTH] User email:", data.email);
       console.debug("[AUTH] User level:", data.nivel_acesso);
-      console.debug("[AUTH] BI Subcategories from backend:", data.bi_subcategories);
+      console.debug(
+        "[AUTH] BI Subcategories from backend:",
+        data.bi_subcategories,
+      );
 
       if (!data.email) {
         throw new Error("Email not found in response");
@@ -351,8 +354,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Store user data in sessionStorage
       const authJson = JSON.stringify(userData);
       sessionStorage.setItem("evoque-fitness-auth", authJson);
-      console.debug("[AUTH] ✓ Saved to sessionStorage, length:", authJson.length);
-      console.debug("[AUTH] Verify sessionStorage:", sessionStorage.getItem("evoque-fitness-auth") ? "OK" : "FAIL");
+      console.debug(
+        "[AUTH] ✓ Saved to sessionStorage, length:",
+        authJson.length,
+      );
+      console.debug(
+        "[AUTH] Verify sessionStorage:",
+        sessionStorage.getItem("evoque-fitness-auth") ? "OK" : "FAIL",
+      );
 
       // Mark that we need to sync permissions after mount
       sessionStorage.setItem("__auth_needs_refresh__", "true");
@@ -396,7 +405,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // AFTER navigation starts, trigger auth:refresh event
         // This ensures useAuth hooks are mounted and listening before event fires
         setTimeout(() => {
-          console.debug("[AUTH] Dispatching auth:refresh event to sync permissions from backend");
+          console.debug(
+            "[AUTH] Dispatching auth:refresh event to sync permissions from backend",
+          );
           window.dispatchEvent(new CustomEvent("auth:refresh"));
         }, 100); // Small delay to ensure page is mounted and listeners registered
       }, 0);
@@ -535,16 +546,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginTime: now,
       };
 
-      console.debug("[AUTH] Password login - BI Subcategories from backend:", data.bi_subcategories);
-      console.debug("[AUTH] Password login - Normalized BI Subcategories:", normalizedBiSubcategories);
+      console.debug(
+        "[AUTH] Password login - BI Subcategories from backend:",
+        data.bi_subcategories,
+      );
+      console.debug(
+        "[AUTH] Password login - Normalized BI Subcategories:",
+        normalizedBiSubcategories,
+      );
 
       setUser(userData);
       const authJson = JSON.stringify(userData);
       sessionStorage.setItem("evoque-fitness-auth", authJson);
-      console.debug("[AUTH] ✓ Password login - Saved to sessionStorage, length:", authJson.length);
+      console.debug(
+        "[AUTH] ✓ Password login - Saved to sessionStorage, length:",
+        authJson.length,
+      );
 
       // Trigger auth:refresh event to force reload of permissions from backend
-      console.debug("[AUTH] Dispatching auth:refresh event to sync permissions from backend");
+      console.debug(
+        "[AUTH] Dispatching auth:refresh event to sync permissions from backend",
+      );
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("auth:refresh"));
       }, 500); // Small delay to allow state to settle
