@@ -205,13 +205,15 @@ def listar_bloqueados(db: Session = Depends(get_db)):
 
 
 @router.put("/{user_id}", response_model=UserOut)
-def atualizar_usuario(user_id: int, payload: dict, db: Session = Depends(get_db)):
+def atualizar_usuario(user_id: int, payload: UserUpdate = Body(...), db: Session = Depends(get_db)):
     try:
         import json
-        print(f"[API] atualizar_usuario called for user_id={user_id}, payload keys={list(payload.keys())}")
-        print(f"[API] Full payload: {json.dumps(payload, default=str)}")
-        if "bi_subcategories" in payload:
-            print(f"[API] bi_subcategories in payload: {payload['bi_subcategories']}")
+        # Convert UserUpdate pydantic model to dict for service layer
+        payload_dict = payload.model_dump(exclude_unset=True)
+        print(f"[API] atualizar_usuario called for user_id={user_id}, payload keys={list(payload_dict.keys())}")
+        print(f"[API] Full payload: {json.dumps(payload_dict, default=str)}")
+        if "bi_subcategories" in payload_dict:
+            print(f"[API] bi_subcategories in payload: {payload_dict['bi_subcategories']}")
 
         updated = update_user(db, user_id, payload)
         print(f"[API] User updated successfully, new setores={getattr(updated, '_setores', 'N/A')}")
