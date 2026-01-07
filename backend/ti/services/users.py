@@ -233,8 +233,9 @@ def update_user(db: Session, user_id: int, data: dict) -> User:
     if not user:
         raise ValueError("Usuário não encontrado")
 
-    if "email" in data and data["email"] and data["email"] != user.email:
-        if db.query(User).filter(User.email == str(data["email"])) .first():
+    if "email" in data and data["email"] and data["email"].lower() != user.email.lower():
+        from sqlalchemy import func
+        if db.query(User).filter(func.lower(User.email) == str(data["email"]).lower()).first():
             raise ValueError("E-mail já cadastrado")
         user.email = str(data["email"])  # type: ignore
     if "usuario" in data and data["usuario"] and data["usuario"] != user.usuario:
