@@ -56,8 +56,9 @@ def criar_usuario(db: Session, payload: UserCreate) -> UserCreatedOut:
         User.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
-    # Uniqueness checks
-    if payload.email and db.query(User).filter(User.email == str(payload.email)).first():
+    # Uniqueness checks (email is case-insensitive)
+    from sqlalchemy import func
+    if payload.email and db.query(User).filter(func.lower(User.email) == str(payload.email).lower()).first():
         raise ValueError("E-mail já cadastrado")
     if payload.usuario and db.query(User).filter(User.usuario == payload.usuario).first():
         raise ValueError("Nome de usuário já cadastrado")
