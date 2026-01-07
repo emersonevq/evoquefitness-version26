@@ -470,12 +470,14 @@ def force_logout(user_id: int, db: Session = Depends(get_db)):
         try:
             setores_list = []
             import json
+            from ti.services.users import _denormalize_sector
             if getattr(user, "_setores", None):
-                setores_list = [str(x) for x in json.loads(user._setores) if x is not None]
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in json.loads(user._setores) if x is not None]
             elif getattr(user, "setor", None):
-                setores_list = [str(user.setor)]
+                setores_list = [_denormalize_sector(str(user.setor))]
         except Exception:
-            setores_list = [str(user.setor)] if user.setor else []
+            setores_list = [_denormalize_sector(str(user.setor))] if user.setor else []
 
         # Ensure nome and sobrenome are non-empty strings
         user_nome = (user.nome or "").strip()
