@@ -324,16 +324,16 @@ def authenticate_user(db: Session, identifier: str, senha: str) -> dict:
     except Exception:
         db.rollback()
 
-    # prepare setores list and normalize strings (remove accents)
+    # prepare setores list and denormalize to canonical titles
     setores_list: list[str] = []
     try:
         if user._setores:
             raw = json.loads(user._setores)
-            setores_list = [ _normalize_str(str(s)) for s in raw if s is not None ]
+            setores_list = [ _denormalize_sector(str(s)) for s in raw if s is not None ]
         elif user.setor:
-            setores_list = [ _normalize_str(str(user.setor)) ]
+            setores_list = [ _denormalize_sector(str(user.setor)) ]
     except Exception:
-        setores_list = [ _normalize_str(str(user.setor))] if user.setor else []
+        setores_list = [ _denormalize_sector(str(user.setor))] if user.setor else []
 
     # Debug log to help trace login+alterar_senha flow
     try:
