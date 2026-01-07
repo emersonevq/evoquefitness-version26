@@ -322,6 +322,45 @@ def atualizar_usuario(user_id: int, payload: dict, db: Session = Depends(get_db)
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar: {e}")
 
 
+@router.get("/{user_id}/debug-setores")
+def debug_user_setores(user_id: int, db: Session = Depends(get_db)):
+    """Debug endpoint to check what's actually in the database for a user's setores/permissions"""
+    try:
+        from ..models import User
+        from ..services.users import _denormalize_sector
+        User.__table__.create(bind=engine, checkfirst=True)
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {"error": f"User {user_id} not found"}
+
+        import json
+
+        setores_raw = getattr(user, "_setores", None)
+        setor_single = getattr(user, "setor", None)
+        setores_parsed = None
+        setores_denormalized = None
+
+        try:
+            if setores_raw:
+                setores_parsed = json.loads(setores_raw)
+                setores_denormalized = [_denormalize_sector(str(x)) for x in setores_parsed]
+        except Exception as e:
+            pass
+
+        return {
+            "user_id": user.id,
+            "usuario": user.usuario,
+            "user_name": f"{user.nome} {user.sobrenome}",
+            "_setores_raw_db": setores_raw,
+            "_setores_parsed": setores_parsed,
+            "_setores_denormalized": setores_denormalized,
+            "setor_single": setor_single,
+            "note": "Mostra o estado bruto e processado dos setores no banco"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @router.get("/{user_id}/debug-bi")
 def debug_user_bi(user_id: int, db: Session = Depends(get_db)):
     """Debug endpoint to check what's actually in the database for a user's BI permissions"""
