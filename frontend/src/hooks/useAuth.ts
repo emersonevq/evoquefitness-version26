@@ -132,6 +132,12 @@ export function useAuth() {
     if (existing) setUser(existing);
     setIsLoading(false);
 
+    // Check if we need to refresh permissions after login
+    const needsRefresh = sessionStorage.getItem("__auth_needs_refresh__");
+    if (needsRefresh === "true") {
+      console.debug("[AUTH] Found __auth_needs_refresh__ flag - will trigger refresh after mount");
+    }
+
     // Socket.IO connection (shared on window so multiple imports don't recreate)
     let socket: any = (window as any).__APP_SOCK__;
     let mounted = true;
