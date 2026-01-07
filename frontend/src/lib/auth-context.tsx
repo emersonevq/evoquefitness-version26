@@ -384,6 +384,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.debug("[AUTH] ✓ Redirecting to:", redirectUrl);
       console.log("[AUTH] ✓ Auth success, navigating to:", redirectUrl);
 
+      // Trigger auth:refresh event to force reload of permissions from backend
+      console.debug("[AUTH] Dispatching auth:refresh event to sync permissions from backend");
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("auth:refresh"));
+      }, 500); // Small delay to allow redirect to complete
+
       // Use setTimeout to ensure state update completes before navigation
       setTimeout(() => {
         navigate(redirectUrl, { replace: true });
