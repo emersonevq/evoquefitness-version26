@@ -450,9 +450,10 @@ def get_auth0_user(request: Auth0UserRequest, db: Session = Depends(get_db)):
         if not email_verified:
             print(f"[AUTH0-USER] ⚠️  Email not verified, but AUTH0_REQUIRE_EMAIL_VERIFIED is False - allowing login")
 
-        # Find user
+        # Find user (case-insensitive search for email)
         print(f"[AUTH0-USER] Looking up user by email: {email}")
-        user = db.query(User).filter(User.email == email).first()
+        email_lower = email.lower() if email else None
+        user = db.query(User).filter(func.lower(User.email) == email_lower).first()
 
         if not user:
             print(f"[AUTH0-USER] ✗ User not found in database")
