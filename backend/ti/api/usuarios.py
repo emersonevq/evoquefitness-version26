@@ -20,15 +20,17 @@ router = APIRouter(prefix="/usuarios", tags=["TI - Usuarios"])
 def listar_usuarios(db: Session = Depends(get_db)):
     try:
         from ..models import User
+        from ..services.users import _denormalize_sector
         import json
         # helper to compute setores list
         def compute_setores(u) -> list[str]:
             try:
                 if getattr(u, "_setores", None):
                     raw = json.loads(getattr(u, "_setores"))
-                    return [str(x).encode('utf-8', 'ignore').decode('utf-8') if x is not None else "" for x in raw]
+                    # Denormalize back to canonical titles
+                    return [_denormalize_sector(str(x)) if x is not None else "" for x in raw]
                 if getattr(u, "setor", None):
-                    return [str(getattr(u, "setor"))]
+                    return [_denormalize_sector(str(getattr(u, "setor")))]
             except Exception:
                 pass
             return []
