@@ -1,6 +1,7 @@
 from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from core.db import get_db, engine
 from ti.schemas.user import UserCreate, UserCreatedOut, UserAvailability, UserOut, UserUpdate
 from ti.services.users import (
