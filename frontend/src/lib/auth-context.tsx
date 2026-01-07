@@ -277,6 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.debug("[AUTH] ✓ Exchange successful, got user data");
       console.debug("[AUTH] User email:", data.email);
       console.debug("[AUTH] User level:", data.nivel_acesso);
+      console.debug("[AUTH] BI Subcategories from backend:", data.bi_subcategories);
 
       if (!data.email) {
         throw new Error("Email not found in response");
