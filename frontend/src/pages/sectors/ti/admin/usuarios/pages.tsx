@@ -213,7 +213,7 @@ export function CriarUsuario() {
           senha: generatedPassword,
           nivel_acesso: level,
           setores: selSectors.length ? selSectors : null,
-          bi_subcategories: selBiSubcategories ? [selBiSubcategories] : null,
+          bi_subcategories: selBiSubcategories ? [selBiSubcategories] : [],
           alterar_senha_primeiro_acesso: forceReset,
         }),
       });
@@ -846,7 +846,7 @@ export function Permissoes() {
       usuario: editUsuario,
       nivel_acesso: editNivel,
       setores: editSetores,
-      bi_subcategories: editBiSubcategories.length ? editBiSubcategories : null,
+      bi_subcategories: editBiSubcategories,
       alterar_senha_primeiro_acesso: editForceReset,
     };
 

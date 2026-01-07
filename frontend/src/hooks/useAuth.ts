@@ -69,10 +69,10 @@ function readFromStorage(): AuthUser | null {
             alterar_senha_primeiro_acesso,
             id,
           } = data as AuthRecord & Partial<AuthUser>;
-          // Normalize bi_subcategories: ensure it's always an array
+          // Keep bi_subcategories as is: null means no BI restriction, array means restricted access
           const normalizedBiSubcategories = Array.isArray(bi_subcategories)
             ? bi_subcategories
-            : [];
+            : null;
           return {
             id,
             email,
@@ -98,10 +98,10 @@ function readFromStorage(): AuthUser | null {
             alterar_senha_primeiro_acesso,
             id,
           } = data as AuthUser & Partial<AuthRecord>;
-          // Normalize bi_subcategories: ensure it's always an array
+          // Keep bi_subcategories as is: null means no BI restriction, array means restricted access
           const normalizedBiSubcategories = Array.isArray(bi_subcategories)
             ? bi_subcategories
-            : [];
+            : null;
           return {
             id,
             email,
@@ -359,13 +359,17 @@ export function useAuth() {
         }
 
         // Check for bi_subcategories changes
-        const oldBiSubcategories = current.bi_subcategories || [];
+        const oldBiSubcategories = current.bi_subcategories || null;
         const newBiSubcategories = Array.isArray(data.bi_subcategories)
           ? data.bi_subcategories
-          : [];
+          : null;
         const biSubcategoriesChanged =
-          JSON.stringify(oldBiSubcategories.slice().sort()) !==
-          JSON.stringify(newBiSubcategories.slice().sort());
+          JSON.stringify(
+            oldBiSubcategories ? oldBiSubcategories.slice().sort() : null,
+          ) !==
+          JSON.stringify(
+            newBiSubcategories ? newBiSubcategories.slice().sort() : null,
+          );
 
         console.debug("[AUTH] BI Subcategories comparison:", {
           old: oldBiSubcategories,

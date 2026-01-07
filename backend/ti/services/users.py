@@ -71,7 +71,8 @@ def criar_usuario(db: Session, payload: UserCreate) -> UserCreatedOut:
         setor = normalized[0]
 
     bi_subcategories_json = None
-    if payload.bi_subcategories and len(payload.bi_subcategories) > 0:
+    if payload.bi_subcategories is not None:
+        # Array can be empty (no dashboards) or have items
         bi_subcategories_json = json.dumps(payload.bi_subcategories)
 
     auth0_user = None
@@ -371,7 +372,11 @@ def authenticate_user(db: Session, identifier: str, senha: str) -> dict:
         if user._bi_subcategories:
             raw = json.loads(user._bi_subcategories)
             bi_subcategories_list = [str(x) if x is not None else "" for x in raw]
-    except Exception:
+            print(f"[AUTH] bi_subcategories loaded: raw='{user._bi_subcategories}' parsed={bi_subcategories_list}")
+        else:
+            print(f"[AUTH] user._bi_subcategories is empty/null: {repr(user._bi_subcategories)}")
+    except Exception as e:
+        print(f"[AUTH] Error parsing bi_subcategories: {e}")
         bi_subcategories_list = None
 
     # Ensure nome and sobrenome are never empty strings
