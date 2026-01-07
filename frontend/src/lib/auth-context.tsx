@@ -523,8 +523,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginTime: now,
       };
 
+      console.debug("[AUTH] Password login - BI Subcategories from backend:", data.bi_subcategories);
+      console.debug("[AUTH] Password login - Normalized BI Subcategories:", normalizedBiSubcategories);
+
       setUser(userData);
-      sessionStorage.setItem("evoque-fitness-auth", JSON.stringify(userData));
+      const authJson = JSON.stringify(userData);
+      sessionStorage.setItem("evoque-fitness-auth", authJson);
+      console.debug("[AUTH] ✓ Password login - Saved to sessionStorage, length:", authJson.length);
 
       return {
         ...data,
