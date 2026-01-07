@@ -40,7 +40,9 @@ export function useDashboards() {
       bi_subcategories_type: typeof user?.bi_subcategories,
       bi_subcategories_is_array: Array.isArray(user?.bi_subcategories),
       bi_subcategories_is_null: user?.bi_subcategories === null,
-      bi_subcategories_length: Array.isArray(user?.bi_subcategories) ? user.bi_subcategories.length : "N/A",
+      bi_subcategories_length: Array.isArray(user?.bi_subcategories)
+        ? user.bi_subcategories.length
+        : "N/A",
     });
   }, [user?.id, user?.bi_subcategories?.join(","), user?.bi_subcategories]);
 
@@ -94,13 +96,22 @@ export function useDashboards() {
           bi_subcategories_type: typeof user?.bi_subcategories,
           bi_subcategories_is_null: user?.bi_subcategories === null,
           bi_subcategories_is_array: Array.isArray(user?.bi_subcategories),
-          bi_subcategories_length: Array.isArray(user?.bi_subcategories) ? user.bi_subcategories.length : "N/A",
+          bi_subcategories_length: Array.isArray(user?.bi_subcategories)
+            ? user.bi_subcategories.length
+            : "N/A",
           total_dashboards_available: dashboards.length,
         });
 
-        if (user && user.bi_subcategories !== null && user.bi_subcategories !== undefined) {
+        if (
+          user &&
+          user.bi_subcategories !== null &&
+          user.bi_subcategories !== undefined
+        ) {
           // User has bi_subcategories explicitly set (array, even if empty)
-          if (Array.isArray(user.bi_subcategories) && user.bi_subcategories.length > 0) {
+          if (
+            Array.isArray(user.bi_subcategories) &&
+            user.bi_subcategories.length > 0
+          ) {
             // User has specific dashboards allowed
             console.log(
               `[BI] 🔐 Filtrando dashboards por permissão do usuário:`,
@@ -112,7 +123,10 @@ export function useDashboards() {
             console.log(
               `[BI] ✅ ${filteredDashboards.length} dashboards após filtragem`,
             );
-          } else if (Array.isArray(user.bi_subcategories) && user.bi_subcategories.length === 0) {
+          } else if (
+            Array.isArray(user.bi_subcategories) &&
+            user.bi_subcategories.length === 0
+          ) {
             // User has BI sector but no dashboards selected - restrict all
             console.log(
               "[BI] 🔒 Usuário tem setor BI mas sem dashboards selecionados - acesso negado",
