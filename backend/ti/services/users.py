@@ -164,15 +164,22 @@ def _denormalize_sector(normalized: str) -> str:
 
 
 def _set_setores(user: User, setores):
+    print(f"[_set_setores] Recebido: {setores} (tipo: {type(setores)})")
     if setores and isinstance(setores, list) and len(setores) > 0:
+        print(f"[_set_setores] É uma lista não-vazia com {len(setores)} items")
         normalized = [_normalize_str(str(s)) for s in setores]
+        print(f"[_set_setores] Normalizado: {normalized}")
         user._setores = json.dumps(normalized)
         user.setor = normalized[0] if normalized else None
+        print(f"[_set_setores] Salvando: _setores={user._setores}, setor={user.setor}")
     elif setores and isinstance(setores, str):
+        print(f"[_set_setores] É uma string única")
         normalized = _normalize_str(str(setores))
         user._setores = json.dumps([normalized])
         user.setor = normalized
+        print(f"[_set_setores] Salvando: _setores={user._setores}, setor={user.setor}")
     else:
+        print(f"[_set_setores] Setores vazio ou None - limpando")
         user._setores = None
         user.setor = None
 
