@@ -342,9 +342,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set user in state
       setUser(userData);
       console.debug("[AUTH] ✓ User state updated");
+      console.debug("[AUTH] User data being saved:", {
+        id: userData.id,
+        email: userData.email,
+        bi_subcategories: userData.bi_subcategories,
+      });
 
       // Store user data in sessionStorage
-      sessionStorage.setItem("evoque-fitness-auth", JSON.stringify(userData));
+      const authJson = JSON.stringify(userData);
+      sessionStorage.setItem("evoque-fitness-auth", authJson);
+      console.debug("[AUTH] ✓ Saved to sessionStorage, length:", authJson.length);
+      console.debug("[AUTH] Verify sessionStorage:", sessionStorage.getItem("evoque-fitness-auth") ? "OK" : "FAIL");
 
       // Attempt to identify on Socket.IO immediately after Auth0 login
       try {
