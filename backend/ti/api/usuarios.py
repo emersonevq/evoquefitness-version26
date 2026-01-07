@@ -268,15 +268,17 @@ def atualizar_usuario(user_id: int, payload: dict, db: Session = Depends(get_db)
 
         # Convert to dict with datetime serialization
         try:
+            from ti.services.users import _denormalize_sector
             if getattr(updated, "_setores", None):
                 raw = json.loads(updated._setores)
-                setores_list = [str(x) for x in raw if x is not None]
+                # Denormalize back to canonical titles
+                setores_list = [_denormalize_sector(str(x)) for x in raw if x is not None]
             elif getattr(updated, "setor", None):
-                setores_list = [str(updated.setor)]
+                setores_list = [_denormalize_sector(str(updated.setor))]
             else:
                 setores_list = []
         except Exception:
-            setores_list = [str(updated.setor)] if getattr(updated, "setor", None) else []
+            setores_list = [_denormalize_sector(str(updated.setor))] if getattr(updated, "setor", None) else []
 
         try:
             bi_subcategories_list = None
