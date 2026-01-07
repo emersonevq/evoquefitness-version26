@@ -289,6 +289,7 @@ export function useAuth() {
         const current = readFromStorage();
         if (!current || !current.id) return;
         console.debug("[AUTH] ⟳ Refreshing user data for id", current.id);
+        console.debug("[AUTH] Current bi_subcategories before refresh:", current.bi_subcategories);
         permissionDebugger.log(
           "api",
           `Fetching updated user data from /api/usuarios/${current.id}`,
@@ -303,6 +304,7 @@ export function useAuth() {
           return;
         }
         const data = await res.json();
+        console.debug("[AUTH] ✓ Refresh response bi_subcategories:", data.bi_subcategories);
         const now = Date.now();
         const oldSetores = (current.setores || []).slice().sort();
         const newSetores = (Array.isArray(data.setores) ? data.setores : [])
