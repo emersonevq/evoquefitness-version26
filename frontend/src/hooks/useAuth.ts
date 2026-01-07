@@ -359,13 +359,13 @@ export function useAuth() {
         }
 
         // Check for bi_subcategories changes
-        const oldBiSubcategories = current.bi_subcategories || [];
+        const oldBiSubcategories = current.bi_subcategories || null;
         const newBiSubcategories = Array.isArray(data.bi_subcategories)
           ? data.bi_subcategories
-          : [];
+          : null;
         const biSubcategoriesChanged =
-          JSON.stringify(oldBiSubcategories.slice().sort()) !==
-          JSON.stringify(newBiSubcategories.slice().sort());
+          JSON.stringify(oldBiSubcategories ? oldBiSubcategories.slice().sort() : null) !==
+          JSON.stringify(newBiSubcategories ? newBiSubcategories.slice().sort() : null);
 
         console.debug("[AUTH] BI Subcategories comparison:", {
           old: oldBiSubcategories,
