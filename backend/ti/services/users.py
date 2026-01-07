@@ -321,7 +321,13 @@ def authenticate_user(db: Session, identifier: str, senha: str) -> dict:
         User.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
-    user = db.query(User).filter((User.email == identifier) | (User.usuario == identifier)).first()
+    # Support both email and username; email lookup is case-insensitive
+    from sqlalchemy import func
+    user = None
+    if "@" in identifier:  # Email address
+        user = db.query(User).filter(func.lower(User.email) == identifier.lower()).first()
+    if not user:  # Fallback to username search (case-sensitive for usernames)
+        user = db.query(User).filter(User.usuario == identifier).first()
     from werkzeug.security import check_password_hash
     if not user:
         raise ValueError("Usuário não encontrado")
