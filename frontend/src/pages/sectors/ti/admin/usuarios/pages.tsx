@@ -821,6 +821,14 @@ export function Permissoes() {
       const responseData = await res.json();
       console.log("[ADMIN] ✅ User updated successfully");
       console.log("[ADMIN] ✅ Setores retornados do servidor:", responseData.setores);
+      console.log("[ADMIN] ✅ Setor único retornado:", responseData.setor);
+
+      // Verify that setores were actually saved
+      if (!responseData.setores || responseData.setores.length === 0) {
+        console.error("[ADMIN] ⚠️  PROBLEMA DETECTADO: Servidor retornou setores vazio!");
+        console.error("[ADMIN] Payload que foi enviado:", JSON.stringify(payload, null, 2));
+      }
+
       console.log("[ADMIN] ✅ Full response:", JSON.stringify(responseData, null, 2));
       setEditing(null);
       load();
