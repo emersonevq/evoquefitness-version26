@@ -135,6 +135,14 @@ def criar_usuario(db: Session, payload: UserCreate) -> UserCreatedOut:
 
 import unicodedata
 
+# Canonical sector titles that must match the frontend's sectors.ts
+SECTOR_CANONICAL_MAP = {
+    "portal de ti": "Portal de TI",
+    "portal financeiro": "Portal Financeiro",
+    "portal de manutencao": "Portal de Manutenção",
+    "portal de bi": "Portal de BI",
+}
+
 def _normalize_str(s: str) -> str:
     if not s:
         return s
@@ -142,6 +150,17 @@ def _normalize_str(s: str) -> str:
     nfkd = unicodedata.normalize('NFKD', s)
     only_ascii = ''.join([c for c in nfkd if not unicodedata.combining(c)])
     return only_ascii.replace('\u00a0', ' ').strip().lower()
+
+def _denormalize_sector(normalized: str) -> str:
+    """Convert normalized sector name back to canonical title.
+
+    Example: 'portal de ti' -> 'Portal de TI'
+    If not found in map, return the normalized version as-is.
+    """
+    if not normalized:
+        return normalized
+    canonical = SECTOR_CANONICAL_MAP.get(normalized.lower())
+    return canonical if canonical else normalized
 
 
 def _set_setores(user: User, setores):
