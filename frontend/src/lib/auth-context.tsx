@@ -446,6 +446,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userDataRaw) {
         try {
           const userData = JSON.parse(userDataRaw) as User;
+          // Normalize bi_subcategories when restoring from storage
+          if (!Array.isArray(userData.bi_subcategories)) {
+            userData.bi_subcategories = [];
+          }
           setUser(userData);
           console.debug("[AUTH] ✓ Session restored from sessionStorage");
           return true;
