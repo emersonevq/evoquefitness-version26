@@ -39,8 +39,10 @@ export function useDashboards() {
       bi_subcategories: user?.bi_subcategories,
       bi_subcategories_type: typeof user?.bi_subcategories,
       bi_subcategories_is_array: Array.isArray(user?.bi_subcategories),
+      bi_subcategories_is_null: user?.bi_subcategories === null,
+      bi_subcategories_length: Array.isArray(user?.bi_subcategories) ? user.bi_subcategories.length : "N/A",
     });
-  }, [user?.id, user?.bi_subcategories?.join(",")]);
+  }, [user?.id, user?.bi_subcategories?.join(","), user?.bi_subcategories]);
 
   useEffect(() => {
     const fetchDashboards = async () => {
