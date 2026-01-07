@@ -85,9 +85,9 @@ export function useDashboards() {
         // Filter dashboards based on user permissions
         let filteredDashboards = dashboards;
 
-        if (user && Array.isArray(user.bi_subcategories)) {
-          // User has bi_subcategories defined (even if empty array)
-          if (user.bi_subcategories.length > 0) {
+        if (user && user.bi_subcategories !== null && user.bi_subcategories !== undefined) {
+          // User has bi_subcategories explicitly set (array, even if empty)
+          if (Array.isArray(user.bi_subcategories) && user.bi_subcategories.length > 0) {
             // User has specific dashboards allowed
             console.log(
               `[BI] 🔐 Filtrando dashboards por permissão do usuário:`,
@@ -99,7 +99,7 @@ export function useDashboards() {
             console.log(
               `[BI] ✅ ${filteredDashboards.length} dashboards após filtragem`,
             );
-          } else {
+          } else if (Array.isArray(user.bi_subcategories) && user.bi_subcategories.length === 0) {
             // User has BI sector but no dashboards selected - restrict all
             console.log(
               "[BI] 🔒 Usuário tem setor BI mas sem dashboards selecionados - acesso negado",
@@ -107,12 +107,11 @@ export function useDashboards() {
             filteredDashboards = [];
           }
         } else {
-          // User doesn't have bi_subcategories defined or it's null/undefined - deny access
-          // This prevents showing all dashboards to users who shouldn't have access
+          // User doesn't have bi_subcategories (null/undefined) - no restriction, show all
           console.log(
-            "[BI] 🔒 Usuário sem permissões de BI definidas - acesso negado",
+            "[BI] 📚 Usuário sem restrições de BI - mostrando todos os dashboards",
           );
-          filteredDashboards = [];
+          filteredDashboards = dashboards;
         }
 
         // Group dashboards by category
