@@ -290,6 +290,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lastName = data.sobrenome || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
+      // Normalize bi_subcategories: ensure it's always an array, not null
+      const normalizedBiSubcategories = Array.isArray(data.bi_subcategories)
+        ? data.bi_subcategories
+        : [];
+
       const userData: User = {
         id: data.id,
         email: data.email,
@@ -298,9 +303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastName: lastName,
         nivel_acesso: data.nivel_acesso,
         setores: Array.isArray(data.setores) ? data.setores : [],
-        bi_subcategories: Array.isArray(data.bi_subcategories)
-          ? data.bi_subcategories
-          : null,
+        bi_subcategories: normalizedBiSubcategories,
         loginTime: now,
       };
 
@@ -490,6 +493,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lastName = data.sobrenome || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
+      // Normalize bi_subcategories: ensure it's always an array, not null
+      const normalizedBiSubcategories = Array.isArray(data.bi_subcategories)
+        ? data.bi_subcategories
+        : [];
+
       const userData: User = {
         id: data.id,
         email: data.email,
@@ -498,9 +506,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastName: lastName,
         nivel_acesso: data.nivel_acesso,
         setores: Array.isArray(data.setores) ? data.setores : [],
-        bi_subcategories: Array.isArray(data.bi_subcategories)
-          ? data.bi_subcategories
-          : null,
+        bi_subcategories: normalizedBiSubcategories,
         loginTime: now,
       };
 
