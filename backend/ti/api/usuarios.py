@@ -231,12 +231,20 @@ def atualizar_usuario(user_id: int, payload: UserUpdate = Body(...), db: Session
             print(f"[API-UPDATE] ⚠️  bi_subcategories NÃO está no payload")
 
         updated = update_user(db, user_id, payload_dict)
-        print(f"[API] User updated successfully, new setores={getattr(updated, '_setores', 'N/A')}")
-        print(f"[API] User updated successfully, new _bi_subcategories={getattr(updated, '_bi_subcategories', 'N/A')}")
+
+        new_setores = getattr(updated, '_setores', 'N/A')
+        new_bi = getattr(updated, '_bi_subcategories', 'N/A')
+
+        print(f"[API-UPDATE] ✓ update_user retornou")
+        print(f"[API-UPDATE]   new _setores: {new_setores}")
+        print(f"[API-UPDATE]   new _bi_subcategories: {new_bi}")
 
         # Verify what was actually saved to the database
         db.refresh(updated)
-        print(f"[API] After refresh from DB, _bi_subcategories={getattr(updated, '_bi_subcategories', 'N/A')}")
+
+        after_refresh_bi = getattr(updated, '_bi_subcategories', 'N/A')
+        print(f"[API-UPDATE] ✓ After db.refresh()")
+        print(f"[API-UPDATE]   _bi_subcategories: {after_refresh_bi}")
 
         # Notify the specific user their permissions/profile changed
         try:
