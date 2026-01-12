@@ -587,6 +587,8 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
             tipo="abertura",
             label="Aberto em",
             anexos=anexos_abertura,
+            usuario_nome="Sistema",
+            usuario_email=None,
         ))
         # Item 2: Descrição (se houver)
         if ch.descricao:
@@ -595,6 +597,8 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                 tipo="abertura",
                 label=f"Descrição: \n{ch.descricao}",
                 anexos=None,
+                usuario_nome="Sistema",
+                usuario_email=None,
             ))
         try:
             Notification.__table__.create(bind=engine, checkfirst=True)
@@ -602,11 +606,17 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
             # Priorize historico_status for status events
             hs_rows = db.query(HistoricoStatus).filter(HistoricoStatus.chamado_id == chamado_id).order_by(HistoricoStatus.criado_em.asc()).all()
             for r in hs_rows:
+                usuario = None
+                if r.usuario_id:
+                    usuario = db.query(User).filter(User.id == r.usuario_id).first()
                 items.append(HistoricoItem(
                     t=r.criado_em or now_brazil_naive(),
                     tipo="status",
                     label=f"{r.status_anterior or 'Aberto'} → {r.status_novo}",
                     anexos=None,
+                    usuario_id=r.usuario_id,
+                    usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
+                    usuario_email=usuario.email if usuario else None,
                 ))
             # Fallback somente se não houver historico_status
             if not hs_rows:
@@ -616,11 +626,17 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                 ).order_by(Notification.criado_em.asc()).all()
                 for n in notas:
                     if n.acao == "status":
+                        usuario = None
+                        if n.usuario_id:
+                            usuario = db.query(User).filter(User.id == n.usuario_id).first()
                         items.append(HistoricoItem(
                             t=n.criado_em or now_brazil_naive(),
                             tipo="status",
                             label=n.mensagem or "Status atualizado",
                             anexos=None,
+                            usuario_id=n.usuario_id,
+                            usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
+                            usuario_email=usuario.email if usuario else None,
                         ))
         except Exception:
             pass
@@ -645,11 +661,17 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                         anexos_ticket.append(_A())
             except Exception:
                 pass
+            usuario = None
+            if h.usuario_id:
+                usuario = db.query(User).filter(User.id == h.usuario_id).first()
             items.append(HistoricoItem(
                 t=h.data_envio or now_brazil_naive(),
                 tipo="ticket",
                 label=f"{h.assunto}",
                 anexos=[AnexoOut.model_validate(a) for a in anexos_ticket] if anexos_ticket else None,
+                usuario_id=h.usuario_id,
+                usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
+                usuario_email=usuario.email if usuario else None,
             ))
         items_sorted = sorted(items, key=lambda x: x.t)
         return HistoricoResponse(items=items_sorted)

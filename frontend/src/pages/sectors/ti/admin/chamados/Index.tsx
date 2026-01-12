@@ -28,7 +28,6 @@ import { ticketsMock } from "../mock";
 import { apiFetch, API_BASE } from "@/lib/api";
 import { useAuthContext } from "@/lib/auth-context";
 import { toast } from "@/hooks/use-toast";
-import { SLAStatusDisplay } from "@/components/sla/SLAStatusDisplay";
 
 type TicketStatus =
   | "ABERTO"
@@ -459,6 +458,8 @@ export default function ChamadosPage() {
       label: string;
       attachments?: string[];
       files?: { name: string; url: string; mime?: string }[];
+      usuario_nome?: string | null;
+      usuario_email?: string | null;
     }[]
   >([]);
   const [template, setTemplate] = useState("");
@@ -490,6 +491,8 @@ export default function ChamadosPage() {
             t: string;
             tipo: string;
             label: string;
+            usuario_nome?: string | null;
+            usuario_email?: string | null;
             anexos?: {
               id: number;
               nome_original: string;
@@ -501,6 +504,8 @@ export default function ChamadosPage() {
           const arr = data.items.map((it) => ({
             t: new Date(it.t).getTime(),
             label: it.label,
+            usuario_nome: it.usuario_nome,
+            usuario_email: it.usuario_email,
             attachments: it.anexos
               ? it.anexos.map((a) => a.nome_original)
               : undefined,
@@ -545,6 +550,8 @@ export default function ChamadosPage() {
       const arr = hist.items.map((it: any) => ({
         t: new Date(it.t).getTime(),
         label: it.label,
+        usuario_nome: it.usuario_nome,
+        usuario_email: it.usuario_email,
         attachments: it.anexos
           ? it.anexos.map((a: any) => a.nome_original)
           : undefined,
@@ -603,6 +610,8 @@ export default function ChamadosPage() {
       const arr = hist.items.map((it: any) => ({
         t: new Date(it.t).getTime(),
         label: it.label,
+        usuario_nome: it.usuario_nome,
+        usuario_email: it.usuario_email,
         attachments: it.anexos
           ? it.anexos.map((a: any) => a.nome_original)
           : undefined,
@@ -1045,7 +1054,6 @@ export default function ChamadosPage() {
                             ))}
                         </div>
                       </div>
-                      <SLAStatusDisplay chamadoId={parseInt(selected.id)} />
                     </div>
 
                     <div className="rounded-lg border bg-card p-5 space-y-4 h-fit">
@@ -1125,6 +1133,8 @@ export default function ChamadosPage() {
                               const arr = hist.items.map((it: any) => ({
                                 t: new Date(it.t).getTime(),
                                 label: it.label,
+                                usuario_nome: it.usuario_nome,
+                                usuario_email: it.usuario_email,
                                 attachments: it.anexos
                                   ? it.anexos.map((a: any) => a.nome_original)
                                   : undefined,
@@ -1176,9 +1186,18 @@ export default function ChamadosPage() {
                           <div className="absolute -left-[29px] top-2 h-4 w-4 rounded-full bg-primary ring-4 ring-background border-2 border-background" />
                           <div className="space-y-2">
                             <p className="font-medium">{ev.label}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(ev.t).toLocaleString()}
-                            </p>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <p>{new Date(ev.t).toLocaleString()}</p>
+                              {ev.usuario_nome && (
+                                <p className="text-xs text-muted-foreground">
+                                  Alterado por:{" "}
+                                  <span className="font-medium text-foreground">
+                                    {ev.usuario_nome}
+                                  </span>
+                                  {ev.usuario_email && ` (${ev.usuario_email})`}
+                                </p>
+                              )}
+                            </div>
                             {ev.files && ev.files.length > 0 && (
                               <div className="flex flex-wrap gap-2 mt-3">
                                 {ev.files.map((f, i) => (
