@@ -449,9 +449,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const updated: User = {
           ...currentUser,
           nivel_acesso: remoteUser.nivel_acesso,
-          setores: Array.isArray(remoteUser.setores)
-            ? remoteUser.setores
-            : [],
+          setores: Array.isArray(remoteUser.setores) ? remoteUser.setores : [],
           bi_subcategories: Array.isArray(remoteUser.bi_subcategories)
             ? remoteUser.bi_subcategories
             : remoteUser.bi_subcategories === null
