@@ -465,6 +465,7 @@ _http.include_router(powerbi_router)
 _http.include_router(metrics_router)
 _http.include_router(dashboard_permissions_router)
 _http.include_router(debug_bi_router)
+_http.include_router(test_bi_router)
 
 # Wrap with Socket.IO ASGI app (exports as 'app')
 app = mount_socketio(_http)
