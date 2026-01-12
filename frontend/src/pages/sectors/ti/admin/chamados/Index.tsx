@@ -1135,6 +1135,8 @@ export default function ChamadosPage() {
                               const arr = hist.items.map((it: any) => ({
                                 t: new Date(it.t).getTime(),
                                 label: it.label,
+                                usuario_nome: it.usuario_nome,
+                                usuario_email: it.usuario_email,
                                 attachments: it.anexos
                                   ? it.anexos.map((a: any) => a.nome_original)
                                   : undefined,
