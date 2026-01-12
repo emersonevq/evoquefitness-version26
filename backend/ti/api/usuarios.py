@@ -287,13 +287,20 @@ def atualizar_usuario(user_id: int, payload: UserUpdate = Body(...), db: Session
             bi_subcategories_list = None
             bi_raw = getattr(updated, "_bi_subcategories", None)
             if bi_raw:
-                raw = json.loads(bi_raw)
-                bi_subcategories_list = [str(x) if x is not None else "" for x in raw]
-                print(f"[API] bi_subcategories parsed from '{bi_raw}' -> {bi_subcategories_list}")
+                try:
+                    raw = json.loads(bi_raw)
+                    bi_subcategories_list = [str(x) if x is not None else "" for x in raw]
+                    print(f"[API] ✅ bi_subcategories parsed from '{bi_raw}' -> {bi_subcategories_list}")
+                except json.JSONDecodeError as je:
+                    print(f"[API] ❌ JSON decode error parsing _bi_subcategories: {je}")
+                    print(f"[API]    Raw value was: {repr(bi_raw)}")
+                    bi_subcategories_list = None
             else:
-                print(f"[API] _bi_subcategories is None/empty -> bi_subcategories_list is None")
+                print(f"[API] ℹ️  _bi_subcategories is None/empty -> bi_subcategories_list is None")
         except Exception as e:
-            print(f"[API] Error parsing _bi_subcategories: {e}")
+            print(f"[API] ❌ Error parsing _bi_subcategories: {e}")
+            import traceback
+            traceback.print_exc()
             bi_subcategories_list = None
 
         # Ensure nome and sobrenome are non-empty strings
