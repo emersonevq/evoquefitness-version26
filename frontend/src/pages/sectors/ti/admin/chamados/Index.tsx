@@ -492,6 +492,8 @@ export default function ChamadosPage() {
             t: string;
             tipo: string;
             label: string;
+            usuario_nome?: string | null;
+            usuario_email?: string | null;
             anexos?: {
               id: number;
               nome_original: string;
@@ -503,6 +505,8 @@ export default function ChamadosPage() {
           const arr = data.items.map((it) => ({
             t: new Date(it.t).getTime(),
             label: it.label,
+            usuario_nome: it.usuario_nome,
+            usuario_email: it.usuario_email,
             attachments: it.anexos
               ? it.anexos.map((a) => a.nome_original)
               : undefined,
