@@ -1054,7 +1054,6 @@ export default function ChamadosPage() {
                             ))}
                         </div>
                       </div>
-                      <SLAStatusDisplay chamadoId={parseInt(selected.id)} />
                     </div>
 
                     <div className="rounded-lg border bg-card p-5 space-y-4 h-fit">
