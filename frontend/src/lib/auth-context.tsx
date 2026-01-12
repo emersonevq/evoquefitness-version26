@@ -363,9 +363,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.getItem("evoque-fitness-auth") ? "OK" : "FAIL",
       );
 
-      // Mark that we need to sync permissions after mount
-      sessionStorage.setItem("__auth_needs_refresh__", "true");
-      console.debug("[AUTH] ✓ Marked for refresh after mount");
+      // Refresh permissions immediately after Auth0 login
+      // This ensures we have the latest bi_subcategories from the server
+      await refreshUserPermissions(userData.id!);
 
       // Attempt to identify on Socket.IO immediately after Auth0 login
       try {
