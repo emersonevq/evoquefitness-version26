@@ -1190,7 +1190,10 @@ export default function ChamadosPage() {
                               <p>{new Date(ev.t).toLocaleString()}</p>
                               {ev.usuario_nome && (
                                 <p className="text-xs text-muted-foreground">
-                                  Alterado por: <span className="font-medium text-foreground">{ev.usuario_nome}</span>
+                                  Alterado por:{" "}
+                                  <span className="font-medium text-foreground">
+                                    {ev.usuario_nome}
+                                  </span>
                                   {ev.usuario_email && ` (${ev.usuario_email})`}
                                 </p>
                               )}
