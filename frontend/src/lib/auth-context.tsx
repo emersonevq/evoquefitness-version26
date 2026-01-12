@@ -478,12 +478,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userDataRaw) {
         try {
           const userData = JSON.parse(userDataRaw) as User;
-          // Normalize bi_subcategories when restoring from storage
-          if (!Array.isArray(userData.bi_subcategories)) {
-            userData.bi_subcategories = [];
+          // Keep bi_subcategories as is: null means no restriction, array means restricted
+          // Do NOT convert null to [] - they have different meanings!
+          if (userData.bi_subcategories === undefined) {
+            userData.bi_subcategories = null; // undefined -> null for consistency
           }
           setUser(userData);
-          console.debug("[AUTH] ✓ Session restored from sessionStorage");
+          console.debug("[AUTH] ✓ Session restored from sessionStorage", {
+            bi_subcategories: userData.bi_subcategories,
+          });
           return true;
         } catch (e) {
           console.error(
