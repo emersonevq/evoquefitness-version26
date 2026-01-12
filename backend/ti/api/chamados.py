@@ -606,11 +606,17 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
             # Priorize historico_status for status events
             hs_rows = db.query(HistoricoStatus).filter(HistoricoStatus.chamado_id == chamado_id).order_by(HistoricoStatus.criado_em.asc()).all()
             for r in hs_rows:
+                usuario = None
+                if r.usuario_id:
+                    usuario = db.query(User).filter(User.id == r.usuario_id).first()
                 items.append(HistoricoItem(
                     t=r.criado_em or now_brazil_naive(),
                     tipo="status",
                     label=f"{r.status_anterior or 'Aberto'} → {r.status_novo}",
                     anexos=None,
+                    usuario_id=r.usuario_id,
+                    usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
+                    usuario_email=usuario.email if usuario else None,
                 ))
             # Fallback somente se não houver historico_status
             if not hs_rows:
