@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { apiFetch } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/lib/auth-context";
 
 export interface Dashboard {
   id: number;
