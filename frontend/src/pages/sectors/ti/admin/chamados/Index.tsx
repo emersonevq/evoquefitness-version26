@@ -1188,9 +1188,15 @@ export default function ChamadosPage() {
                           <div className="absolute -left-[29px] top-2 h-4 w-4 rounded-full bg-primary ring-4 ring-background border-2 border-background" />
                           <div className="space-y-2">
                             <p className="font-medium">{ev.label}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(ev.t).toLocaleString()}
-                            </p>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <p>{new Date(ev.t).toLocaleString()}</p>
+                              {ev.usuario_nome && (
+                                <p className="text-xs text-muted-foreground">
+                                  Alterado por: <span className="font-medium text-foreground">{ev.usuario_nome}</span>
+                                  {ev.usuario_email && ` (${ev.usuario_email})`}
+                                </p>
+                              )}
+                            </div>
                             {ev.files && ev.files.length > 0 && (
                               <div className="flex flex-wrap gap-2 mt-3">
                                 {ev.files.map((f, i) => (
