@@ -878,6 +878,10 @@ export function Permissoes() {
         responseData.setores,
       );
       console.log("[ADMIN] ✅ Setor único retornado:", responseData.setor);
+      console.log(
+        "[ADMIN] ✅ BI Subcategories retornadas do servidor:",
+        responseData.bi_subcategories,
+      );
 
       // Verify that setores were actually saved
       if (!responseData.setores || responseData.setores.length === 0) {
