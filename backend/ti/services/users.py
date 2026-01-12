@@ -208,18 +208,25 @@ def _set_setores(user: User, setores):
 def _set_bi_subcategories(user: User, bi_subcategories):
     print(f"[_set_bi_subcategories] Called with: {bi_subcategories}")
     print(f"[_set_bi_subcategories] Type: {type(bi_subcategories)}")
+    print(f"[_set_bi_subcategories] Is array?: {isinstance(bi_subcategories, list)}")
+    if isinstance(bi_subcategories, list):
+        print(f"[_set_bi_subcategories] Array length: {len(bi_subcategories)}")
+        if len(bi_subcategories) > 0:
+            print(f"[_set_bi_subcategories] Array contents: {bi_subcategories}")
 
     if bi_subcategories and isinstance(bi_subcategories, list) and len(bi_subcategories) > 0:
         json_str = json.dumps(bi_subcategories)
-        print(f"[_set_bi_subcategories] Setting _bi_subcategories to: {json_str}")
+        print(f"[_set_bi_subcategories] ✅ Setting _bi_subcategories to: {json_str}")
         user._bi_subcategories = json_str
     elif bi_subcategories is not None and isinstance(bi_subcategories, list) and len(bi_subcategories) == 0:
         # Explicit empty list means user has BI sector but no dashboards selected
-        print(f"[_set_bi_subcategories] User has BI sector but empty dashboard list - storing empty array")
+        print(f"[_set_bi_subcategories] ⚠️  User has BI sector but empty dashboard list - storing empty array")
         user._bi_subcategories = json.dumps([])
     else:
-        print(f"[_set_bi_subcategories] Setting _bi_subcategories to None")
+        print(f"[_set_bi_subcategories] ⛔ Setting _bi_subcategories to None")
         user._bi_subcategories = None
+
+    print(f"[_set_bi_subcategories] Final value in DB: {user._bi_subcategories}")
 
 
 
