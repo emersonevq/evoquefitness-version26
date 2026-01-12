@@ -211,10 +211,24 @@ def atualizar_usuario(user_id: int, payload: UserUpdate = Body(...), db: Session
         import json
         # Convert UserUpdate pydantic model to dict for service layer
         payload_dict = payload.model_dump(exclude_unset=True)
-        print(f"[API] atualizar_usuario called for user_id={user_id}, payload keys={list(payload_dict.keys())}")
-        print(f"[API] Full payload: {json.dumps(payload_dict, default=str)}")
+
+        print(f"\n{'='*80}")
+        print(f"[API-UPDATE] ATUALIZANDO USUÁRIO user_id={user_id}")
+        print(f"[API-UPDATE] Payload keys: {list(payload_dict.keys())}")
+        print(f"[API-UPDATE] Full payload: {json.dumps(payload_dict, default=str)}")
+
         if "bi_subcategories" in payload_dict:
-            print(f"[API] bi_subcategories in payload: {payload_dict['bi_subcategories']}")
+            bi_subs = payload_dict['bi_subcategories']
+            print(f"[API-UPDATE] ✓ bi_subcategories PRESENTE no payload")
+            print(f"[API-UPDATE]   Valor: {bi_subs}")
+            print(f"[API-UPDATE]   Tipo: {type(bi_subs)}")
+            print(f"[API-UPDATE]   É array?: {isinstance(bi_subs, list)}")
+            if isinstance(bi_subs, list):
+                print(f"[API-UPDATE]   Comprimento: {len(bi_subs)}")
+                for idx, item in enumerate(bi_subs):
+                    print(f"[API-UPDATE]     [{idx}] {repr(item)}")
+        else:
+            print(f"[API-UPDATE] ⚠️  bi_subcategories NÃO está no payload")
 
         updated = update_user(db, user_id, payload_dict)
         print(f"[API] User updated successfully, new setores={getattr(updated, '_setores', 'N/A')}")
