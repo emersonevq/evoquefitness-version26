@@ -14,6 +14,7 @@ from io import BytesIO
 from ti.api import chamados_router, unidades_router, problemas_router, notifications_router, notification_settings_router, alerts_router, email_debug_router, sla_router, powerbi_router, metrics_router
 from ti.api.usuarios import router as usuarios_router
 from ti.api.dashboard_permissions import router as dashboard_permissions_router
+from ti.api.debug_bi_permissions import router as debug_bi_router
 from auth0.routes import router as auth0_router
 from core.realtime import mount_socketio
 import json
