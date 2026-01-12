@@ -206,27 +206,55 @@ def _set_setores(user: User, setores):
 
 
 def _set_bi_subcategories(user: User, bi_subcategories):
+    """
+    Set user's BI subcategories (allowed dashboards).
+
+    Handles:
+    - List of dashboard IDs: stores as JSON array
+    - Empty list: stores as JSON empty array (user has BI sector but no access)
+    - None/null: clears the field (no BI permissions)
+    """
+    print(f"\n[_set_bi_subcategories] ========== START ==========")
     print(f"[_set_bi_subcategories] Called with: {bi_subcategories}")
     print(f"[_set_bi_subcategories] Type: {type(bi_subcategories)}")
-    print(f"[_set_bi_subcategories] Is array?: {isinstance(bi_subcategories, list)}")
+    print(f"[_set_bi_subcategories] Is None?: {bi_subcategories is None}")
+    print(f"[_set_bi_subcategories] Is list?: {isinstance(bi_subcategories, list)}")
+
     if isinstance(bi_subcategories, list):
         print(f"[_set_bi_subcategories] Array length: {len(bi_subcategories)}")
         if len(bi_subcategories) > 0:
             print(f"[_set_bi_subcategories] Array contents: {bi_subcategories}")
+            # Verify all are strings
+            for i, item in enumerate(bi_subcategories):
+                print(f"[_set_bi_subcategories]   [{i}] {repr(item)} (type: {type(item).__name__})")
 
-    if bi_subcategories and isinstance(bi_subcategories, list) and len(bi_subcategories) > 0:
-        json_str = json.dumps(bi_subcategories)
-        print(f"[_set_bi_subcategories] ✅ Setting _bi_subcategories to: {json_str}")
-        user._bi_subcategories = json_str
-    elif bi_subcategories is not None and isinstance(bi_subcategories, list) and len(bi_subcategories) == 0:
-        # Explicit empty list means user has BI sector but no dashboards selected
-        print(f"[_set_bi_subcategories] ⚠️  User has BI sector but empty dashboard list - storing empty array")
-        user._bi_subcategories = json.dumps([])
+    # Handle different input types
+    if bi_subcategories is None or (isinstance(bi_subcategories, list) and len(bi_subcategories) == 0 and bi_subcategories is None):
+        # None: clear permissions
+        print(f"[_set_bi_subcategories] 🔓 Clearing BI subcategories (None input)")
+        user._bi_subcategories = None
+    elif isinstance(bi_subcategories, list):
+        # List: convert to JSON
+        if len(bi_subcategories) > 0:
+            # Non-empty list: user has specific dashboards
+            # Ensure all items are strings
+            clean_list = [str(item).strip() for item in bi_subcategories if item]
+            json_str = json.dumps(clean_list)
+            print(f"[_set_bi_subcategories] ✅ Setting _bi_subcategories to JSON: {json_str}")
+            user._bi_subcategories = json_str
+        else:
+            # Empty list: user has BI sector but no dashboards selected
+            print(f"[_set_bi_subcategories] 🔒 User has BI sector but empty dashboard list - storing empty array")
+            user._bi_subcategories = json.dumps([])
     else:
-        print(f"[_set_bi_subcategories] ⛔ Setting _bi_subcategories to None")
+        # Invalid input type
+        print(f"[_set_bi_subcategories] ⚠️  Invalid input type: {type(bi_subcategories).__name__}")
+        print(f"[_set_bi_subcategories] 🔓 Setting to None (invalid input)")
         user._bi_subcategories = None
 
     print(f"[_set_bi_subcategories] Final value in DB: {user._bi_subcategories}")
+    print(f"[_set_bi_subcategories] Final value type: {type(user._bi_subcategories)}")
+    print(f"[_set_bi_subcategories] ========== END ==========\n")
 
 
 
