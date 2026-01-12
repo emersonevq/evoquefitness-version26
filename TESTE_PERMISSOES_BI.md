@@ -3,6 +3,7 @@
 ## O Que Vamos Fazer
 
 Vamos rastrear EXATAMENTE o que está acontecendo quando você:
+
 1. Seleciona 1 dashboard para um usuário
 2. Salva
 3. Verifica se foi realmente salvo no banco
@@ -13,6 +14,7 @@ Vamos rastrear EXATAMENTE o que está acontecendo quando você:
 Você precisa de um user_id para testar. Pode ser qualquer usuário existente.
 
 Se não souber, execute este comando no banco:
+
 ```sql
 SELECT id, usuario, email FROM user LIMIT 5;
 ```
@@ -28,6 +30,7 @@ curl http://localhost:8000/api/test/bi-check/{USER_ID}
 ```
 
 Exemplo resposta:
+
 ```json
 {
   "user_id": 5,
@@ -53,6 +56,7 @@ curl -X POST http://localhost:8000/api/test/bi-fix/{USER_ID} \
 **Substitua `dashboard_123` por um ID real de dashboard!**
 
 Para saber que dashboard IDs existem, acesse:
+
 ```bash
 curl http://localhost:8000/api/powerbi/db/dashboards
 ```
@@ -68,6 +72,7 @@ curl -X POST http://localhost:8000/api/test/bi-fix/5 \
 ```
 
 **Resposta esperada:**
+
 ```json
 {
   "status": "ok",
@@ -87,6 +92,7 @@ curl http://localhost:8000/api/test/bi-check/5
 ```
 
 Resposta esperada:
+
 ```json
 {
   "user_id": 5,
@@ -109,6 +115,7 @@ Se ver TODOS os dashboards = **o problema está no frontend ou na lógica de aut
 ## Passo 6: Consultar os Logs do Backend
 
 Enquanto você estiver testando, olhe os logs do backend para mensagens com:
+
 - `[API-UPDATE]` - Logs da atualização
 - `[_set_bi_subcategories]` - Logs do salvamento
 - `[AUTH]` - Logs de autenticação
@@ -116,12 +123,14 @@ Enquanto você estiver testando, olhe os logs do backend para mensagens com:
 ## Se Algo Estiver Errado
 
 Se no Passo 4 `_bi_subcategories_raw` ainda estiver `null`:
+
 1. Abra o backend em modo debug
 2. Execute o POST do Passo 3 novamente
 3. Procure por `[TEST-BI-FIX]` nos logs
 4. Envie os logs para diagnóstico
 
 Se no Passo 5 ainda ver todos os dashboards:
+
 1. Abra o navegador (F12)
 2. Console do navegador deve mostrar logs com `[BI]`
 3. Procure por `[BI] 🔐 Filtrando dashboards`

@@ -907,14 +907,8 @@ export function Permissoes() {
         console.error(
           "[ADMIN] ⚠️  PROBLEMA DETECTADO: BI Subcategories não foram salvos!",
         );
-        console.error(
-          "[ADMIN] Esperado:",
-          editBiSubcategories,
-        );
-        console.error(
-          "[ADMIN] Recebido:",
-          responseData.bi_subcategories,
-        );
+        console.error("[ADMIN] Esperado:", editBiSubcategories);
+        console.error("[ADMIN] Recebido:", responseData.bi_subcategories);
         console.error(
           "[ADMIN] Payload que foi enviado:",
           JSON.stringify(payload, null, 2),

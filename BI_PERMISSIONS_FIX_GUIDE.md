@@ -1,6 +1,7 @@
 # BI Portal Subcategories Permissions Fix - Testing Guide
 
 ## Problem
+
 When granting permission for BI portal subcategories, when the user logs out and logs back in, they regain access to all subcategories, even when only 1 was selected.
 
 **Root Cause**: The permission persistence and loading flow needed better validation and logging to identify where the issue occurs.
@@ -8,12 +9,14 @@ When granting permission for BI portal subcategories, when the user logs out and
 ## What Was Fixed
 
 ### 1. **Backend Debug Endpoints**
+
 - Created `/api/debug/bi-permissions/{user_id}` - Check BI permissions for a specific user
 - Created `/api/debug/all-users-bi-permissions` - Check permissions for all users
 - Created `/api/debug/set-bi-permissions/{user_id}` - Manually set BI permissions (for testing)
 - Created `/api/debug/refresh-user/{user_id}` - Trigger permission refresh event
 
 ### 2. **Enhanced Logging**
+
 - Improved `_set_bi_subcategories` function with detailed logging of:
   - Input validation
   - JSON parsing
@@ -21,6 +24,7 @@ When granting permission for BI portal subcategories, when the user logs out and
 - Enhanced API endpoint logging with better error messages
 
 ### 3. **Frontend Improvements**
+
 - Added logging verification for BI subcategories when updating users
 - Added check to verify BI subcategories were saved correctly
 - Better error reporting when permissions are not persisted
@@ -120,6 +124,7 @@ curl http://localhost:8000/api/debug/bi-permissions/5
 ## Key Logs to Look For
 
 ### Backend Logs (when saving user permissions)
+
 ```
 [_set_bi_subcategories] ========== START ==========
 [_set_bi_subcategories] Called with: ['dashboard_123']
@@ -131,17 +136,20 @@ curl http://localhost:8000/api/debug/bi-permissions/5
 ```
 
 ### Frontend Logs (when saving user)
+
 ```
 [ADMIN] ✅ BI Subcategories retornadas do servidor: ['dashboard_123']
 ```
 
 ### Frontend Logs (when loading BI page)
+
 ```
 [BI] 🔐 Filtrando dashboards por permissão do usuário: ['dashboard_123']
 [BI] ✅ 1 dashboards após filtragem
 ```
 
 ### Frontend Logs (when login changes)
+
 ```
 [AUTH] ✓ BI_SUBCATEGORIES CHANGED: [] → ['dashboard_123']
 ```
@@ -149,19 +157,22 @@ curl http://localhost:8000/api/debug/bi-permissions/5
 ## Troubleshooting
 
 ### Issue: `_bi_subcategories_raw_from_db` is `null`
+
 - **Cause**: Permission was never saved to the database
-- **Solution**: 
+- **Solution**:
   1. Check the save log (Step 3) - was there an error?
   2. Use `/api/debug/set-bi-permissions/{user_id}` to manually set permissions
   3. Try saving again from the admin interface
 
 ### Issue: Dashboard list is still showing all dashboards after login
+
 - **Check 1**: Is `_bi_subcategories_raw_from_db` populated? (Use debug endpoint)
 - **Check 2**: Is `authenticate_user` returning `bi_subcategories`? (Check backend logs)
 - **Check 3**: Is the frontend storing the value? (Check browser console `[AUTH]` logs)
 - **Check 4**: Is the filter logic working? (Check `[BI]` logs)
 
 ### Issue: Getting JSON decode errors
+
 - **Check the raw value** in the debug endpoint
 - **Should be**: `"[\"dashboard_1\", \"dashboard_2\"]"`
 - **If it's something else**: There's a JSON serialization issue
@@ -184,6 +195,7 @@ SELECT id, usuario, email, _bi_subcategories FROM user WHERE id = 5;
 ## Summary
 
 The fix ensures that:
+
 1. ✅ BI subcategory permissions are properly serialized to JSON
 2. ✅ Permissions are correctly persisted in the database
 3. ✅ Permissions are loaded on authentication
