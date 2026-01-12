@@ -894,6 +894,33 @@ export function Permissoes() {
         );
       }
 
+      // Verify that bi_subcategories were actually saved (if BI sector is selected)
+      const hasBiSector = editSetores.some((s) =>
+        isSectorMatch(s, "Portal de BI"),
+      );
+      if (
+        hasBiSector &&
+        editBiSubcategories.length > 0 &&
+        (!responseData.bi_subcategories ||
+          responseData.bi_subcategories.length === 0)
+      ) {
+        console.error(
+          "[ADMIN] ⚠️  PROBLEMA DETECTADO: BI Subcategories não foram salvos!",
+        );
+        console.error(
+          "[ADMIN] Esperado:",
+          editBiSubcategories,
+        );
+        console.error(
+          "[ADMIN] Recebido:",
+          responseData.bi_subcategories,
+        );
+        console.error(
+          "[ADMIN] Payload que foi enviado:",
+          JSON.stringify(payload, null, 2),
+        );
+      }
+
       console.log(
         "[ADMIN] ✅ Full response:",
         JSON.stringify(responseData, null, 2),
