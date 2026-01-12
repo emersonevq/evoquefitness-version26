@@ -14,10 +14,10 @@ except Exception:  # pragma: no cover - best effort import
     _env = None
 
 # Read settings from env module or environment variables
-CLIENT_ID = (_env.CLIENT_ID if _env and getattr(_env, "CLIENT_ID", None) else os.getenv("CLIENT_ID"))
-CLIENT_SECRET = (_env.CLIENT_SECRET if _env and getattr(_env, "CLIENT_SECRET", None) else os.getenv("CLIENT_SECRET"))
-TENANT_ID = (_env.TENANT_ID if _env and getattr(_env, "TENANT_ID", None) else os.getenv("TENANT_ID"))
-USER_ID = (_env.USER_ID if _env and getattr(_env, "USER_ID", None) else os.getenv("USER_ID"))
+CLIENT_ID = (_env.GRAPH_CLIENT_ID if _env and getattr(_env, "GRAPH_CLIENT_ID", None) else os.getenv("GRAPH_CLIENT_ID"))
+CLIENT_SECRET = (_env.GRAPH_CLIENT_SECRET if _env and getattr(_env, "GRAPH_CLIENT_SECRET", None) else os.getenv("GRAPH_CLIENT_SECRET"))
+TENANT_ID = (_env.GRAPH_TENANT_ID if _env and getattr(_env, "GRAPH_TENANT_ID", None) else os.getenv("GRAPH_TENANT_ID"))
+USER_ID = (_env.GRAPH_USER_ID if _env and getattr(_env, "GRAPH_USER_ID", None) else os.getenv("GRAPH_USER_ID"))
 
 EMAIL_TI = (_env.EMAIL_TI if _env and getattr(_env, "EMAIL_TI", None) else os.getenv("EMAIL_TI"))
 EMAIL_SISTEMA = (_env.EMAIL_SISTEMA if _env and getattr(_env, "EMAIL_SISTEMA", None) else os.getenv("EMAIL_SISTEMA"))
