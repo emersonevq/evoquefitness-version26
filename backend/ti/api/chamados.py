@@ -587,6 +587,8 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
             tipo="abertura",
             label="Aberto em",
             anexos=anexos_abertura,
+            usuario_nome="Sistema",
+            usuario_email=None,
         ))
         # Item 2: Descrição (se houver)
         if ch.descricao:
@@ -595,6 +597,8 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                 tipo="abertura",
                 label=f"Descrição: \n{ch.descricao}",
                 anexos=None,
+                usuario_nome="Sistema",
+                usuario_email=None,
             ))
         try:
             Notification.__table__.create(bind=engine, checkfirst=True)
