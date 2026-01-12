@@ -363,9 +363,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.getItem("evoque-fitness-auth") ? "OK" : "FAIL",
       );
 
-      // Mark that we need to sync permissions after mount
-      sessionStorage.setItem("__auth_needs_refresh__", "true");
-      console.debug("[AUTH] ✓ Marked for refresh after mount");
+      // Refresh permissions immediately after Auth0 login
+      // This ensures we have the latest bi_subcategories from the server
+      await refreshUserPermissions(userData.id!);
 
       // Attempt to identify on Socket.IO immediately after Auth0 login
       try {
@@ -416,6 +416,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("[AUTH] Error details:", (error as any)?.message || error);
       setUser(null);
       throw error;
+    }
+  };
+
+  // Function to refresh user permissions from backend
+  const refreshUserPermissions = async (userId: number): Promise<void> => {
+    try {
+      console.debug(
+        "[AUTH] 🔄 Refreshing user permissions from backend for user",
+        userId,
+      );
+      const response = await fetch(`/api/usuarios/${userId}`);
+      if (!response.ok) {
+        console.error(
+          "[AUTH] Failed to refresh permissions, status:",
+          response.status,
+        );
+        return;
+      }
+
+      const remoteUser = await response.json();
+      console.debug("[AUTH] ✓ Fresh user data from backend:", {
+        id: remoteUser.id,
+        bi_subcategories: remoteUser.bi_subcategories,
+        setores: remoteUser.setores,
+      });
+
+      // Update user state with fresh data from backend
+      setUser((currentUser) => {
+        if (!currentUser) return null;
+
+        const updated: User = {
+          ...currentUser,
+          nivel_acesso: remoteUser.nivel_acesso,
+          setores: Array.isArray(remoteUser.setores) ? remoteUser.setores : [],
+          bi_subcategories: Array.isArray(remoteUser.bi_subcategories)
+            ? remoteUser.bi_subcategories
+            : remoteUser.bi_subcategories === null
+              ? null
+              : [],
+        };
+
+        console.debug("[AUTH] ✓ Updated user permissions in state:", {
+          bi_subcategories: updated.bi_subcategories,
+          setores: updated.setores,
+        });
+
+        // Update sessionStorage with fresh data
+        const authJson = JSON.stringify(updated);
+        sessionStorage.setItem("evoque-fitness-auth", authJson);
+
+        return updated;
+      });
+    } catch (error) {
+      console.error("[AUTH] Error refreshing permissions:", error);
     }
   };
 
@@ -478,12 +532,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userDataRaw) {
         try {
           const userData = JSON.parse(userDataRaw) as User;
-          // Normalize bi_subcategories when restoring from storage
-          if (!Array.isArray(userData.bi_subcategories)) {
-            userData.bi_subcategories = [];
+          // Keep bi_subcategories as is: null means no restriction, array means restricted
+          // Do NOT convert null to [] - they have different meanings!
+          if (userData.bi_subcategories === undefined) {
+            userData.bi_subcategories = null; // undefined -> null for consistency
           }
           setUser(userData);
-          console.debug("[AUTH] ✓ Session restored from sessionStorage");
+          console.debug("[AUTH] ✓ Session restored from sessionStorage", {
+            bi_subcategories: userData.bi_subcategories,
+          });
           return true;
         } catch (e) {
           console.error(
@@ -563,13 +620,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authJson.length,
       );
 
-      // Trigger auth:refresh event to force reload of permissions from backend
-      console.debug(
-        "[AUTH] Dispatching auth:refresh event to sync permissions from backend",
-      );
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("auth:refresh"));
-      }, 500); // Small delay to allow state to settle
+      // Refresh permissions immediately after password login
+      // This ensures we have the latest bi_subcategories from the server
+      await refreshUserPermissions(userData.id!);
 
       return {
         ...data,

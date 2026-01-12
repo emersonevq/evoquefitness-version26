@@ -501,6 +501,22 @@ export function useAuth() {
     );
     window.addEventListener("user:updated", handleUserUpdated as EventListener);
 
+    // If __auth_needs_refresh__ flag is set (from login), call refresh immediately
+    if (needsRefresh === "true") {
+      console.debug(
+        "[AUTH] 🔄 __auth_needs_refresh__ flag detected - calling refresh() immediately",
+      );
+      sessionStorage.removeItem("__auth_needs_refresh__"); // Clear the flag
+      // Call refresh asynchronously to avoid blocking
+      setTimeout(() => {
+        if (mounted) {
+          refresh().catch((err) => {
+            console.error("[AUTH] Initial refresh failed:", err);
+          });
+        }
+      }, 50); // Small delay to ensure socket setup is complete
+    }
+
     // Polling fallback: periodically check for permission updates (every 30 seconds)
     // This is a safety net only - real updates come from Socket.IO events
     let pollInterval: ReturnType<typeof setInterval> | null = null;
