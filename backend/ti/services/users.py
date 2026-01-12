@@ -37,9 +37,11 @@ def check_user_availability(db: Session, email: str | None = None, username: str
         User.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
+    from sqlalchemy import func
     availability = UserAvailability()
     if email is not None:
-        availability.email_exists = db.query(User).filter(User.email == email).first() is not None
+        # Email check is case-insensitive
+        availability.email_exists = db.query(User).filter(func.lower(User.email) == email.lower()).first() is not None
     if username is not None:
         availability.usuario_exists = db.query(User).filter(User.usuario == username).first() is not None
     return availability
@@ -54,8 +56,9 @@ def criar_usuario(db: Session, payload: UserCreate) -> UserCreatedOut:
         User.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
-    # Uniqueness checks
-    if payload.email and db.query(User).filter(User.email == str(payload.email)).first():
+    # Uniqueness checks (email is case-insensitive)
+    from sqlalchemy import func
+    if payload.email and db.query(User).filter(func.lower(User.email) == str(payload.email).lower()).first():
         raise ValueError("E-mail já cadastrado")
     if payload.usuario and db.query(User).filter(User.usuario == payload.usuario).first():
         raise ValueError("Nome de usuário já cadastrado")
@@ -205,18 +208,25 @@ def _set_setores(user: User, setores):
 def _set_bi_subcategories(user: User, bi_subcategories):
     print(f"[_set_bi_subcategories] Called with: {bi_subcategories}")
     print(f"[_set_bi_subcategories] Type: {type(bi_subcategories)}")
+    print(f"[_set_bi_subcategories] Is array?: {isinstance(bi_subcategories, list)}")
+    if isinstance(bi_subcategories, list):
+        print(f"[_set_bi_subcategories] Array length: {len(bi_subcategories)}")
+        if len(bi_subcategories) > 0:
+            print(f"[_set_bi_subcategories] Array contents: {bi_subcategories}")
 
     if bi_subcategories and isinstance(bi_subcategories, list) and len(bi_subcategories) > 0:
         json_str = json.dumps(bi_subcategories)
-        print(f"[_set_bi_subcategories] Setting _bi_subcategories to: {json_str}")
+        print(f"[_set_bi_subcategories] ✅ Setting _bi_subcategories to: {json_str}")
         user._bi_subcategories = json_str
     elif bi_subcategories is not None and isinstance(bi_subcategories, list) and len(bi_subcategories) == 0:
         # Explicit empty list means user has BI sector but no dashboards selected
-        print(f"[_set_bi_subcategories] User has BI sector but empty dashboard list - storing empty array")
+        print(f"[_set_bi_subcategories] ⚠️  User has BI sector but empty dashboard list - storing empty array")
         user._bi_subcategories = json.dumps([])
     else:
-        print(f"[_set_bi_subcategories] Setting _bi_subcategories to None")
+        print(f"[_set_bi_subcategories] ⛔ Setting _bi_subcategories to None")
         user._bi_subcategories = None
+
+    print(f"[_set_bi_subcategories] Final value in DB: {user._bi_subcategories}")
 
 
 
@@ -230,8 +240,9 @@ def update_user(db: Session, user_id: int, data: dict) -> User:
     if not user:
         raise ValueError("Usuário não encontrado")
 
-    if "email" in data and data["email"] and data["email"] != user.email:
-        if db.query(User).filter(User.email == str(data["email"])) .first():
+    if "email" in data and data["email"] and data["email"].lower() != user.email.lower():
+        from sqlalchemy import func
+        if db.query(User).filter(func.lower(User.email) == str(data["email"]).lower()).first():
             raise ValueError("E-mail já cadastrado")
         user.email = str(data["email"])  # type: ignore
     if "usuario" in data and data["usuario"] and data["usuario"] != user.usuario:
@@ -321,7 +332,13 @@ def authenticate_user(db: Session, identifier: str, senha: str) -> dict:
         User.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
-    user = db.query(User).filter((User.email == identifier) | (User.usuario == identifier)).first()
+    # Support both email and username; email lookup is case-insensitive
+    from sqlalchemy import func
+    user = None
+    if "@" in identifier:  # Email address
+        user = db.query(User).filter(func.lower(User.email) == identifier.lower()).first()
+    if not user:  # Fallback to username search (case-sensitive for usernames)
+        user = db.query(User).filter(User.usuario == identifier).first()
     from werkzeug.security import check_password_hash
     if not user:
         raise ValueError("Usuário não encontrado")
