@@ -419,6 +419,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Function to refresh user permissions from backend
+  const refreshUserPermissions = async (userId: number): Promise<void> => {
+    try {
+      console.debug(
+        "[AUTH] 🔄 Refreshing user permissions from backend for user",
+        userId,
+      );
+      const response = await fetch(`/api/usuarios/${userId}`);
+      if (!response.ok) {
+        console.error(
+          "[AUTH] Failed to refresh permissions, status:",
+          response.status,
+        );
+        return;
+      }
+
+      const remoteUser = await response.json();
+      console.debug("[AUTH] ✓ Fresh user data from backend:", {
+        id: remoteUser.id,
+        bi_subcategories: remoteUser.bi_subcategories,
+        setores: remoteUser.setores,
+      });
+
+      // Update user state with fresh data from backend
+      setUser((currentUser) => {
+        if (!currentUser) return null;
+
+        const updated: User = {
+          ...currentUser,
+          nivel_acesso: remoteUser.nivel_acesso,
+          setores: Array.isArray(remoteUser.setores)
+            ? remoteUser.setores
+            : [],
+          bi_subcategories: Array.isArray(remoteUser.bi_subcategories)
+            ? remoteUser.bi_subcategories
+            : remoteUser.bi_subcategories === null
+              ? null
+              : [],
+        };
+
+        console.debug("[AUTH] ✓ Updated user permissions in state:", {
+          bi_subcategories: updated.bi_subcategories,
+          setores: updated.setores,
+        });
+
+        // Update sessionStorage with fresh data
+        const authJson = JSON.stringify(updated);
+        sessionStorage.setItem("evoque-fitness-auth", authJson);
+
+        return updated;
+      });
+    } catch (error) {
+      console.error("[AUTH] Error refreshing permissions:", error);
+    }
+  };
+
   const checkExistingSession = async (): Promise<boolean> => {
     try {
       const sessionToken = sessionStorage.getItem("auth_session_token");
