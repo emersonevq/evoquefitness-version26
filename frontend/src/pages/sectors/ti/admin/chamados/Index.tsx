@@ -459,6 +459,8 @@ export default function ChamadosPage() {
       label: string;
       attachments?: string[];
       files?: { name: string; url: string; mime?: string }[];
+      usuario_nome?: string | null;
+      usuario_email?: string | null;
     }[]
   >([]);
   const [template, setTemplate] = useState("");
