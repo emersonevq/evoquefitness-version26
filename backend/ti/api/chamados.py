@@ -661,11 +661,17 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                         anexos_ticket.append(_A())
             except Exception:
                 pass
+            usuario = None
+            if h.usuario_id:
+                usuario = db.query(User).filter(User.id == h.usuario_id).first()
             items.append(HistoricoItem(
                 t=h.data_envio or now_brazil_naive(),
                 tipo="ticket",
                 label=f"{h.assunto}",
                 anexos=[AnexoOut.model_validate(a) for a in anexos_ticket] if anexos_ticket else None,
+                usuario_id=h.usuario_id,
+                usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
+                usuario_email=usuario.email if usuario else None,
             ))
         items_sorted = sorted(items, key=lambda x: x.t)
         return HistoricoResponse(items=items_sorted)
