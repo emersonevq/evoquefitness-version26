@@ -626,11 +626,17 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                 ).order_by(Notification.criado_em.asc()).all()
                 for n in notas:
                     if n.acao == "status":
+                        usuario = None
+                        if n.usuario_id:
+                            usuario = db.query(User).filter(User.id == n.usuario_id).first()
                         items.append(HistoricoItem(
                             t=n.criado_em or now_brazil_naive(),
                             tipo="status",
                             label=n.mensagem or "Status atualizado",
                             anexos=None,
+                            usuario_id=n.usuario_id,
+                            usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
+                            usuario_email=usuario.email if usuario else None,
                         ))
         except Exception:
             pass
