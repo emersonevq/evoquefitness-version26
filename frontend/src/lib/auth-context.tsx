@@ -622,13 +622,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authJson.length,
       );
 
-      // Trigger auth:refresh event to force reload of permissions from backend
-      console.debug(
-        "[AUTH] Dispatching auth:refresh event to sync permissions from backend",
-      );
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("auth:refresh"));
-      }, 500); // Small delay to allow state to settle
+      // Refresh permissions immediately after password login
+      // This ensures we have the latest bi_subcategories from the server
+      await refreshUserPermissions(userData.id!);
 
       return {
         ...data,
