@@ -29,7 +29,7 @@ export function useDashboards() {
   const [categories, setCategories] = useState<DashboardCategory[]>([]);
   const prevCategoriesRef = useRef<DashboardCategory[] | null>(null);
   const isFetchingRef = useRef(false);
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
   // Debug: Log user data on mount and when it changes
   useEffect(() => {
