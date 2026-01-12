@@ -149,6 +149,9 @@ export function useAuth() {
     let socketIdentifyAttempts = 0;
     const maxIdentifyAttempts = 5;
 
+    // Define refresh function early so it can be called immediately if needed
+    let refresh: any = null;
+
     const setupSocket = async () => {
       if (socket) {
         console.debug("[SIO] Socket already exists, reusing");
