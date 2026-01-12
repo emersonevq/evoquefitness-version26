@@ -28,7 +28,6 @@ import { ticketsMock } from "../mock";
 import { apiFetch, API_BASE } from "@/lib/api";
 import { useAuthContext } from "@/lib/auth-context";
 import { toast } from "@/hooks/use-toast";
-import { SLAStatusDisplay } from "@/components/sla/SLAStatusDisplay";
 
 type TicketStatus =
   | "ABERTO"
