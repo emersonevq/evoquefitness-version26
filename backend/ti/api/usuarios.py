@@ -331,7 +331,7 @@ def atualizar_usuario(user_id: int, payload: UserUpdate = Body(...), db: Session
         if not user_nome:
             user_nome = updated.email.split("@")[0] if updated.email else updated.usuario
 
-        return {
+        response = {
             "id": updated.id,
             "nome": user_nome,
             "sobrenome": user_sobrenome,
@@ -344,6 +344,12 @@ def atualizar_usuario(user_id: int, payload: UserUpdate = Body(...), db: Session
             "bloqueado": bool(updated.bloqueado),
             "session_revoked_at": updated.session_revoked_at.isoformat() if getattr(updated, 'session_revoked_at', None) else None,
         }
+
+        print(f"[API-UPDATE] ✓ Resposta sendo enviada:")
+        print(f"[API-UPDATE]   bi_subcategories na resposta: {response['bi_subcategories']}")
+        print(f"{'='*80}\n")
+
+        return response
     except ValueError as e:
         print(f"[API] ValueError: {e}")
         raise HTTPException(status_code=400, detail=str(e))
