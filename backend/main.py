@@ -15,6 +15,7 @@ from ti.api import chamados_router, unidades_router, problemas_router, notificat
 from ti.api.usuarios import router as usuarios_router
 from ti.api.dashboard_permissions import router as dashboard_permissions_router
 from ti.api.debug_bi_permissions import router as debug_bi_router
+from ti.api.test_bi_fix import router as test_bi_router
 from auth0.routes import router as auth0_router
 from core.realtime import mount_socketio
 import json
