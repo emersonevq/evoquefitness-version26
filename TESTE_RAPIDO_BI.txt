@@ -1,0 +1,118 @@
+DIAGNÓSTICO RÁPIDO - PERMISSÕES BI
+==================================
+
+O PROBLEMA PODE ESTAR EM UM DESSES 4 LUGARES:
+
+1. SALVAMENTO NO BANCO
+   - Você seleciona dashboard no admin
+   - Sistema tenta salvar no banco
+   - MAS NÃO SALVA (fica NULL no banco)
+
+2. CARREGAMENTO NA AUTENTICAÇÃO
+   - Valores estão no banco
+   - MAS quando user faz login, não carrega
+   - Ou carrega errado (vem como NULL)
+
+3. ARMAZENAMENTO NO FRONTEND
+   - Carrega na autenticação
+   - MAS frontend não armazena
+   - Session/storage fica vazio
+
+4. FILTRAGEM DE DASHBOARDS
+   - Tudo carrega corretamente
+   - MAS frontend não filtra baseado no valor
+   - Mostra todos de qualquer forma
+
+
+VAMOS DESCOBRIR QUAL É
+======================
+
+PASSO 1 - Pega um user ID
+--------------------------
+No banco de dados, execute:
+  SELECT id, usuario FROM user LIMIT 3;
+
+Copia um ID (exemplo: 5)
+
+
+PASSO 2 - Verifica o estado inicial
+-------------------------------------
+No terminal/Postman, execute:
+
+curl http://localhost:8000/api/test/bi-check/5
+
+Resposta esperada:
+{
+  "user_id": 5,
+  "_bi_subcategories_raw": null,
+  "_bi_subcategories_parsed": null
+}
+
+Se _bi_subcategories_raw for null = AINDA NÃO FOI SALVO NADA
+
+
+PASSO 3 - Força salvar permissões
+----------------------------------
+Primeiro, descobre um dashboard_id real:
+
+curl http://localhost:8000/api/powerbi/db/dashboards
+
+Procura por um "dashboard_id" nessa resposta (exemplo: "abc123def456")
+
+Depois, força salvar:
+
+curl -X POST http://localhost:8000/api/test/bi-fix/5 \
+  -H "Content-Type: application/json" \
+  -d '{"dashboard_ids": ["abc123def456"]}'
+
+Deve responder com "status": "ok"
+
+
+PASSO 4 - Verifica se realmente salvou
+---------------------------------------
+Execute novamente:
+
+curl http://localhost:8000/api/test/bi-check/5
+
+Desta vez _bi_subcategories_raw deve ter um valor tipo:
+"[\"abc123def456\"]"
+
+- Se SIM = Problema é no FRONTEND ou AUTENTICAÇÃO
+- Se NÃO (ainda null) = Problema é no SALVAMENTO
+
+
+PASSO 5 - Se foi salvo, testa login
+------------------------------------
+1. Desloga de qualquer conta
+2. Faz login COM ESSE USUÁRIO (ID 5 do exemplo)
+3. Vai para Portal de BI
+4. Abre o console do navegador (F12)
+
+Procura por logs [BI] que mostrem:
+- [BI] 🔐 Filtrando dashboards = ESTÁ FILTRANDO
+- [BI] 📚 Usuário sem restrições = NÃO ESTÁ FILTRANDO
+
+Se aparecer "sem restrições" = Problema está no FRONTEND (não carregou ou não armazenou)
+
+
+RESULTADO
+=========
+
+Se passar no Passo 4 mas falhar no Passo 5:
+→ Problema está no FRONTEND/AUTENTICAÇÃO
+→ O valor está no banco mas não está carregando no login
+
+Se falhar no Passo 4:
+→ Problema está no SALVAMENTO
+→ O valor não está sendo persistido no banco
+
+Se passar em Passo 5 mas ver TODOS os dashboards:
+→ Problema está na FILTRAGEM
+→ O valor carrega mas frontend não usa para filtrar
+
+
+DEPOIS DO DIAGNÓSTICO
+====================
+
+Você conseguirá identificar EXATAMENTE qual é o problema.
+Aí posso corrigir o código no local certo.
