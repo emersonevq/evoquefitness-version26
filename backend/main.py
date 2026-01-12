@@ -446,6 +446,7 @@ _http.include_router(sla_router, prefix="/api")
 _http.include_router(powerbi_router, prefix="/api")
 _http.include_router(metrics_router, prefix="/api")
 _http.include_router(dashboard_permissions_router, prefix="")
+_http.include_router(debug_bi_router, prefix="")
 
 # Compatibility mount without prefix, in case the server is run without proxy
 _http.include_router(auth0_router)
