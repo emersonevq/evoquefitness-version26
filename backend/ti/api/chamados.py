@@ -841,6 +841,16 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
         except Exception:
             db.rollback()
             pass
+
+        # Enviar email de notificação de status atualizado
+        try:
+            print(f"[CHAMADOS] 📧 Status do chamado {ch.codigo} atualizado ({prev} → {ch.status}). Disparando email...")
+            send_async(send_chamado_status, ch, prev)
+            print(f"[CHAMADOS] ✅ send_async() chamado para send_chamado_status")
+        except Exception as e:
+            print(f"[CHAMADOS] ❌ ERRO ao enviar email: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
         try:
             print(f"[CHAMADOS] \ud83d\udce7 Status do chamado {ch.codigo} atualizado ({prev} → {ch.status}). Disparando email de notifica\u00e7\u00e3o...\")\n            send_async(send_chamado_status, ch, prev)\n            print(f\"[CHAMADOS] \u2705 send_async() foi chamado com sucesso para send_chamado_status\")\n        except Exception as e:\n            print(f\"[CHAMADOS] \u274c ERRO ao chamar send_async para send_chamado_status: {type(e).__name__}: {e}\")\n            import traceback\n            traceback.print_exc()\n        db.refresh(ch)\n        db.expunge(ch)\n        return ch\n    except HTTPException:\n        raise\n    except Exception as e:\n        raise HTTPException(status_code=500, detail=f\"Erro ao atualizar status: {e}\")")
 
