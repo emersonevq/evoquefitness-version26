@@ -39,10 +39,13 @@ def _have_graph_config() -> bool:
 def _get_graph_token() -> Optional[str]:
     global _graph_token
     if not _have_graph_config():
+        print("[EMAIL] ❌ Cannot get token: Graph config missing")
         return None
     now = time.time()
     if _graph_token and now < _graph_token[1] - 30:
+        print("[EMAIL] ✓ Using cached Graph token")
         return _graph_token[0]
+    print("[EMAIL] 🔄 Requesting new Graph token...")
     token_url = f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token"
     data = parse.urlencode({
         "client_id": CLIENT_ID,
