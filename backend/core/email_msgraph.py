@@ -284,10 +284,16 @@ def send_mail(subject: str, html_body: str, to: List[str], cc: Optional[List[str
 def send_async(func, *args, **kwargs) -> None:
     def _runner():
         try:
+            print(f"[EMAIL] 🧵 Async thread started for {func.__name__}")
             func(*args, **kwargs)
+            print(f"[EMAIL] 🧵 Async thread completed for {func.__name__}")
         except Exception as e:  # pragma: no cover
-            print(f"[EMAIL] async error: {e}")
-    threading.Thread(target=_runner, daemon=True).start()
+            print(f"[EMAIL] ❌ Async thread error in {func.__name__}: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+    thread = threading.Thread(target=_runner, daemon=True)
+    thread.start()
+    print(f"[EMAIL] 🧵 Spawned async thread for {func.__name__}")
 
 
 def send_chamado_abertura(ch, attachments: Optional[List[Dict[str, Any]]] = None) -> bool:
