@@ -243,8 +243,9 @@ def build_email_status_atualizado(ch, status_anterior: str) -> Tuple[str, str]:
 
 def send_mail(subject: str, html_body: str, to: List[str], cc: Optional[List[str]] = None, attachments: Optional[List[Dict[str, Any]]] = None) -> bool:
     if not _have_graph_config():
-        print("[EMAIL] Graph configuration missing; skipping send.")
+        print("[EMAIL] ❌ Graph configuration missing; skipping send.")
         return False
+    print(f"[EMAIL] 📧 Preparing email: to={to}, subject='{subject[:50]}...'")
     to_list = _recipients(to)
     cc_list = _recipients(cc or [])
     message = {
