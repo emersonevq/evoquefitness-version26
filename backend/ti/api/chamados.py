@@ -230,9 +230,13 @@ def criar_chamado(payload: ChamadoCreate, db: Session = Depends(get_db)):
             print(f"[WebSocket] Erro ao emitir eventos: {e}")
             pass
         try:
+            print(f"[CHAMADOS] 📧 Chamado {ch.codigo} criado. Disparando envio de email de abertura...")
             send_async(send_chamado_abertura, ch)
-        except Exception:
-            pass
+            print(f"[CHAMADOS] ✅ send_async() foi chamado com sucesso para send_chamado_abertura")
+        except Exception as e:
+            print(f"[CHAMADOS] ❌ ERRO ao chamar send_async para send_chamado_abertura: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
         db.refresh(ch)
         db.expunge(ch)
         return ch
@@ -410,20 +414,29 @@ def criar_chamado_com_anexos(
                         continue
                 # send async email with attachments
                 try:
+                    print(f"[CHAMADOS] 📧 Chamado {ch.codigo} criado com anexos. Disparando envio de email...")
                     if attachments_payload:
                         send_async(send_chamado_abertura, ch, attachments_payload)
+                        print(f"[CHAMADOS] ✅ send_async() chamado com {len(attachments_payload)} anexo(s)")
                     else:
                         send_async(send_chamado_abertura, ch)
-                except Exception:
-                    pass
+                        print(f"[CHAMADOS] ✅ send_async() chamado sem anexos")
+                except Exception as e:
+                    print(f"[CHAMADOS] ❌ ERRO ao chamar send_async: {type(e).__name__}: {e}")
+                    import traceback
+                    traceback.print_exc()
             except Exception:
                 pass
         else:
             # No files: still send the opening email
             try:
+                print(f"[CHAMADOS] 📧 Chamado {ch.codigo} criado sem anexos. Disparando envio de email...")
                 send_async(send_chamado_abertura, ch)
-            except Exception:
-                pass
+                print(f"[CHAMADOS] ✅ send_async() foi chamado com sucesso")
+            except Exception as e:
+                print(f"[CHAMADOS] ❌ ERRO ao chamar send_async: {type(e).__name__}: {e}")
+                import traceback
+                traceback.print_exc()
 
         # REFRESH e EXPUNGE ANTES de qualquer operação async para evitar estado transitório
         try:
@@ -532,6 +545,29 @@ def enviar_ticket(
             db.commit()
             if files and saved == 0:
                 raise HTTPException(status_code=500, detail="Falha ao salvar anexos do ticket")
+        # Enviar email de ticket enviado
+        try:
+            print(f"[CHAMADOS] 📧 Ticket #{h_id} enviado para chamado {chamado_id}. Disparando email...")
+            # Construir e-mail de ticket enviado
+            from core.email_msgraph import send_mail
+            subject = f"[Evoque TI] Novo ticket - Chamado {chamado.codigo}"
+            html_body = f"""
+            <p>Olá,</p>
+            <p>Um novo ticket foi enviado no chamado <strong>{chamado.codigo}</strong>:</p>
+            <p><strong>Assunto:</strong> {assunto}</p>
+            <p><strong>Mensagem:</strong></p>
+            <p>{mensagem.replace(chr(10), '<br>')}</p>
+            <p>Acesse o portal para ver mais detalhes.</p>
+            """
+            # Enviamos para os destinatários especificados e CC para TI
+            to_emails = [e.strip() for e in destinatarios.split(';') if e.strip()] if destinatarios else []
+            if to_emails:
+                send_async(send_mail, subject, html_body, to=to_emails)
+                print(f"[CHAMADOS] ✅ Email de ticket enviado para {len(to_emails)} destinatário(s)")
+        except Exception as e:
+            print(f"[CHAMADOS] ❌ ERRO ao enviar email de ticket: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
         return {"ok": True, "historico_id": h_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao enviar ticket: {e}")
