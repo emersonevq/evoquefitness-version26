@@ -24,6 +24,22 @@ from core.db import get_db, engine
 from ti.models.media import Media
 from ti.scripts.create_performance_indices import create_indices
 
+# Verificar configuração de email do Graph
+try:
+    from core.email_msgraph import _have_graph_config, CLIENT_ID, CLIENT_SECRET, TENANT_ID, USER_ID
+    if _have_graph_config():
+        print("✅ [EMAIL] Configuração do Microsoft Graph OK")
+        print(f"   CLIENT_ID: {CLIENT_ID[:20]}...")
+        print(f"   USER_ID: {USER_ID}")
+    else:
+        print("⚠️  [EMAIL] Configuração do Microsoft Graph INCOMPLETA - emails NÃO serão enviados")
+        print(f"   CLIENT_ID: {'✗' if not CLIENT_ID else '✓'}")
+        print(f"   CLIENT_SECRET: {'✗' if not CLIENT_SECRET else '✓'}")
+        print(f"   TENANT_ID: {'✗' if not TENANT_ID else '✓'}")
+        print(f"   USER_ID: {'✗' if not USER_ID else '✓'}")
+except Exception as e:
+    print(f"⚠️  [EMAIL] Erro ao verificar configuração: {e}")
+
 # Create the FastAPI application (HTTP)
 _http = FastAPI(title="Evoque API - TI", version="1.0.0")
 
