@@ -62,15 +62,18 @@ def _get_graph_token() -> Optional[str]:
             expires_in = int(payload.get("expires_in", 3600))
             if token:
                 _graph_token = (token, now + expires_in)
+                print(f"[EMAIL] ✅ Graph token obtained successfully (expires in {expires_in}s)")
                 return token
+            else:
+                print(f"[EMAIL] ❌ Graph token response missing 'access_token': {payload}")
     except error.HTTPError as e:
         try:
             msg = e.read().decode("utf-8")
-            print(f"[EMAIL] Graph token error: {e.code} {msg}")
+            print(f"[EMAIL] ❌ Graph token HTTP error {e.code}: {msg}")
         except Exception:
-            print(f"[EMAIL] Graph token HTTPError: {e}")
+            print(f"[EMAIL] ❌ Graph token HTTPError: {e}")
     except Exception as e:
-        print(f"[EMAIL] Graph token exception: {e}")
+        print(f"[EMAIL] ❌ Graph token exception: {type(e).__name__}: {e}")
     return None
 
 
