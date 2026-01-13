@@ -26,7 +26,14 @@ _graph_token: Optional[Tuple[str, float]] = None  # (token, expiry_epoch)
 
 
 def _have_graph_config() -> bool:
-    return bool(CLIENT_ID and CLIENT_SECRET and TENANT_ID and USER_ID)
+    has_config = bool(CLIENT_ID and CLIENT_SECRET and TENANT_ID and USER_ID)
+    if not has_config:
+        print(f"[EMAIL] ❌ GRAPH config MISSING!")
+        print(f"[EMAIL]   CLIENT_ID: {'✓' if CLIENT_ID else '✗ MISSING'}")
+        print(f"[EMAIL]   CLIENT_SECRET: {'✓' if CLIENT_SECRET else '✗ MISSING'}")
+        print(f"[EMAIL]   TENANT_ID: {'✓' if TENANT_ID else '✗ MISSING'}")
+        print(f"[EMAIL]   USER_ID: {'✓' if USER_ID else '✗ MISSING'}")
+    return has_config
 
 
 def _get_graph_token() -> Optional[str]:
