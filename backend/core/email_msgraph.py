@@ -14,10 +14,10 @@ except Exception:  # pragma: no cover - best effort import
     _env = None
 
 # Read settings from env module or environment variables
-CLIENT_ID = (_env.CLIENT_ID if _env and getattr(_env, "CLIENT_ID", None) else os.getenv("CLIENT_ID"))
-CLIENT_SECRET = (_env.CLIENT_SECRET if _env and getattr(_env, "CLIENT_SECRET", None) else os.getenv("CLIENT_SECRET"))
-TENANT_ID = (_env.TENANT_ID if _env and getattr(_env, "TENANT_ID", None) else os.getenv("TENANT_ID"))
-USER_ID = (_env.USER_ID if _env and getattr(_env, "USER_ID", None) else os.getenv("USER_ID"))
+CLIENT_ID = (_env.GRAPH_CLIENT_ID if _env and getattr(_env, "GRAPH_CLIENT_ID", None) else os.getenv("GRAPH_CLIENT_ID"))
+CLIENT_SECRET = (_env.GRAPH_CLIENT_SECRET if _env and getattr(_env, "GRAPH_CLIENT_SECRET", None) else os.getenv("GRAPH_CLIENT_SECRET"))
+TENANT_ID = (_env.GRAPH_TENANT_ID if _env and getattr(_env, "GRAPH_TENANT_ID", None) else os.getenv("GRAPH_TENANT_ID"))
+USER_ID = (_env.GRAPH_USER_ID if _env and getattr(_env, "GRAPH_USER_ID", None) else os.getenv("GRAPH_USER_ID"))
 
 EMAIL_TI = (_env.EMAIL_TI if _env and getattr(_env, "EMAIL_TI", None) else os.getenv("EMAIL_TI"))
 EMAIL_SISTEMA = (_env.EMAIL_SISTEMA if _env and getattr(_env, "EMAIL_SISTEMA", None) else os.getenv("EMAIL_SISTEMA"))
@@ -26,16 +26,26 @@ _graph_token: Optional[Tuple[str, float]] = None  # (token, expiry_epoch)
 
 
 def _have_graph_config() -> bool:
-    return bool(CLIENT_ID and CLIENT_SECRET and TENANT_ID and USER_ID)
+    has_config = bool(CLIENT_ID and CLIENT_SECRET and TENANT_ID and USER_ID)
+    if not has_config:
+        print(f"[EMAIL] ❌ GRAPH config MISSING!")
+        print(f"[EMAIL]   CLIENT_ID: {'✓' if CLIENT_ID else '✗ MISSING'}")
+        print(f"[EMAIL]   CLIENT_SECRET: {'✓' if CLIENT_SECRET else '✗ MISSING'}")
+        print(f"[EMAIL]   TENANT_ID: {'✓' if TENANT_ID else '✗ MISSING'}")
+        print(f"[EMAIL]   USER_ID: {'✓' if USER_ID else '✗ MISSING'}")
+    return has_config
 
 
 def _get_graph_token() -> Optional[str]:
     global _graph_token
     if not _have_graph_config():
+        print("[EMAIL] ❌ Cannot get token: Graph config missing")
         return None
     now = time.time()
     if _graph_token and now < _graph_token[1] - 30:
+        print("[EMAIL] ✓ Using cached Graph token")
         return _graph_token[0]
+    print("[EMAIL] 🔄 Requesting new Graph token...")
     token_url = f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token"
     data = parse.urlencode({
         "client_id": CLIENT_ID,
@@ -52,40 +62,49 @@ def _get_graph_token() -> Optional[str]:
             expires_in = int(payload.get("expires_in", 3600))
             if token:
                 _graph_token = (token, now + expires_in)
+                print(f"[EMAIL] ✅ Graph token obtained successfully (expires in {expires_in}s)")
                 return token
+            else:
+                print(f"[EMAIL] ❌ Graph token response missing 'access_token': {payload}")
     except error.HTTPError as e:
         try:
             msg = e.read().decode("utf-8")
-            print(f"[EMAIL] Graph token error: {e.code} {msg}")
+            print(f"[EMAIL] ❌ Graph token HTTP error {e.code}: {msg}")
         except Exception:
-            print(f"[EMAIL] Graph token HTTPError: {e}")
+            print(f"[EMAIL] ❌ Graph token HTTPError: {e}")
     except Exception as e:
-        print(f"[EMAIL] Graph token exception: {e}")
+        print(f"[EMAIL] ❌ Graph token exception: {type(e).__name__}: {e}")
     return None
 
 
 def _post_graph(path: str, payload: dict) -> bool:
     token = _get_graph_token()
     if not token:
+        print(f"[EMAIL] ❌ Cannot send: no token available")
         return False
     url = f"https://graph.microsoft.com/v1.0{path}"
     body = json.dumps(payload).encode("utf-8")
     req = request.Request(url, data=body, method="POST")
     req.add_header("Authorization", f"Bearer {token}")
     req.add_header("Content-Type", "application/json")
+    print(f"[EMAIL] 📤 Posting to Graph: {path}")
     try:
         with request.urlopen(req, timeout=20) as resp:
             body = resp.read().decode("utf-8") if resp else ""
-            print(f"[EMAIL] Graph sendMail response: status={resp.status} body={body}")
-            return 200 <= resp.status < 300 or resp.status == 202
+            if 200 <= resp.status < 300 or resp.status == 202:
+                print(f"[EMAIL] ✅ Graph sendMail SUCCESS: status={resp.status}")
+                return True
+            else:
+                print(f"[EMAIL] ⚠️ Graph sendMail unexpected status: {resp.status}")
+                return False
     except error.HTTPError as e:
         try:
             msg = e.read().decode("utf-8")
-            print(f"[EMAIL] Graph sendMail error: {e.code} {msg}")
+            print(f"[EMAIL] ❌ Graph sendMail HTTP error {e.code}: {msg}")
         except Exception:
-            print(f"[EMAIL] Graph sendMail HTTPError: {e}")
+            print(f"[EMAIL] ❌ Graph sendMail HTTPError: {e}")
     except Exception as e:
-        print(f"[EMAIL] Graph sendMail exception: {e}")
+        print(f"[EMAIL] ❌ Graph sendMail exception: {type(e).__name__}: {e}")
     return False
 
 
@@ -224,8 +243,9 @@ def build_email_status_atualizado(ch, status_anterior: str) -> Tuple[str, str]:
 
 def send_mail(subject: str, html_body: str, to: List[str], cc: Optional[List[str]] = None, attachments: Optional[List[Dict[str, Any]]] = None) -> bool:
     if not _have_graph_config():
-        print("[EMAIL] Graph configuration missing; skipping send.")
+        print("[EMAIL] ❌ Graph configuration missing; skipping send.")
         return False
+    print(f"[EMAIL] 📧 Preparing email: to={to}, subject='{subject[:50]}...'")
     to_list = _recipients(to)
     cc_list = _recipients(cc or [])
     message = {
@@ -264,23 +284,37 @@ def send_mail(subject: str, html_body: str, to: List[str], cc: Optional[List[str
 def send_async(func, *args, **kwargs) -> None:
     def _runner():
         try:
+            print(f"[EMAIL] 🧵 Async thread started for {func.__name__}")
             func(*args, **kwargs)
+            print(f"[EMAIL] 🧵 Async thread completed for {func.__name__}")
         except Exception as e:  # pragma: no cover
-            print(f"[EMAIL] async error: {e}")
-    threading.Thread(target=_runner, daemon=True).start()
+            print(f"[EMAIL] ❌ Async thread error in {func.__name__}: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+    thread = threading.Thread(target=_runner, daemon=True)
+    thread.start()
+    print(f"[EMAIL] 🧵 Spawned async thread for {func.__name__}")
 
 
 def send_chamado_abertura(ch, attachments: Optional[List[Dict[str, Any]]] = None) -> bool:
+    print(f"[EMAIL] 🎫 send_chamado_abertura() called for ticket {ch.codigo} -> {ch.email}")
     subject, html = build_email_chamado_aberto(ch)
     cc = []
     if EMAIL_TI:
         cc.append(str(EMAIL_TI))
-    return send_mail(subject, html, to=[str(ch.email)], cc=cc, attachments=attachments)
+        print(f"[EMAIL]   Adding CC: {EMAIL_TI}")
+    result = send_mail(subject, html, to=[str(ch.email)], cc=cc, attachments=attachments)
+    print(f"[EMAIL] 🎫 send_chamado_abertura() result: {result}")
+    return result
 
 
 def send_chamado_status(ch, status_anterior: str, attachments: Optional[List[Dict[str, Any]]] = None) -> bool:
+    print(f"[EMAIL] 🔄 send_chamado_status() called for ticket {ch.codigo}: {status_anterior} → {ch.status}")
     subject, html = build_email_status_atualizado(ch, status_anterior)
     cc = []
     if EMAIL_TI:
         cc.append(str(EMAIL_TI))
-    return send_mail(subject, html, to=[str(ch.email)], cc=cc, attachments=attachments)
+        print(f"[EMAIL]   Adding CC: {EMAIL_TI}")
+    result = send_mail(subject, html, to=[str(ch.email)], cc=cc, attachments=attachments)
+    print(f"[EMAIL] 🔄 send_chamado_status() result: {result}")
+    return result
