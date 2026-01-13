@@ -291,11 +291,15 @@ def send_async(func, *args, **kwargs) -> None:
 
 
 def send_chamado_abertura(ch, attachments: Optional[List[Dict[str, Any]]] = None) -> bool:
+    print(f"[EMAIL] 🎫 send_chamado_abertura() called for ticket {ch.codigo} -> {ch.email}")
     subject, html = build_email_chamado_aberto(ch)
     cc = []
     if EMAIL_TI:
         cc.append(str(EMAIL_TI))
-    return send_mail(subject, html, to=[str(ch.email)], cc=cc, attachments=attachments)
+        print(f"[EMAIL]   Adding CC: {EMAIL_TI}")
+    result = send_mail(subject, html, to=[str(ch.email)], cc=cc, attachments=attachments)
+    print(f"[EMAIL] 🎫 send_chamado_abertura() result: {result}")
+    return result
 
 
 def send_chamado_status(ch, status_anterior: str, attachments: Optional[List[Dict[str, Any]]] = None) -> bool:
