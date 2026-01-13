@@ -303,8 +303,12 @@ def send_chamado_abertura(ch, attachments: Optional[List[Dict[str, Any]]] = None
 
 
 def send_chamado_status(ch, status_anterior: str, attachments: Optional[List[Dict[str, Any]]] = None) -> bool:
+    print(f"[EMAIL] 🔄 send_chamado_status() called for ticket {ch.codigo}: {status_anterior} → {ch.status}")
     subject, html = build_email_status_atualizado(ch, status_anterior)
     cc = []
     if EMAIL_TI:
         cc.append(str(EMAIL_TI))
-    return send_mail(subject, html, to=[str(ch.email)], cc=cc, attachments=attachments)
+        print(f"[EMAIL]   Adding CC: {EMAIL_TI}")
+    result = send_mail(subject, html, to=[str(ch.email)], cc=cc, attachments=attachments)
+    print(f"[EMAIL] 🔄 send_chamado_status() result: {result}")
+    return result
