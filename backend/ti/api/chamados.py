@@ -842,16 +842,7 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
             db.rollback()
             pass
         try:
-            send_async(send_chamado_status, ch, prev)
-        except Exception:
-            pass
-        db.refresh(ch)
-        db.expunge(ch)
-        return ch
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar status: {e}")
+            print(f"[CHAMADOS] \ud83d\udce7 Status do chamado {ch.codigo} atualizado ({prev} → {ch.status}). Disparando email de notifica\u00e7\u00e3o...\")\n            send_async(send_chamado_status, ch, prev)\n            print(f\"[CHAMADOS] \u2705 send_async() foi chamado com sucesso para send_chamado_status\")\n        except Exception as e:\n            print(f\"[CHAMADOS] \u274c ERRO ao chamar send_async para send_chamado_status: {type(e).__name__}: {e}\")\n            import traceback\n            traceback.print_exc()\n        db.refresh(ch)\n        db.expunge(ch)\n        return ch\n    except HTTPException:\n        raise\n    except Exception as e:\n        raise HTTPException(status_code=500, detail=f\"Erro ao atualizar status: {e}\")")
 
 
 @router.post("/{chamado_id}/assign", response_model=ChamadoOut)
