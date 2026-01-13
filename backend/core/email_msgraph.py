@@ -80,25 +80,31 @@ def _get_graph_token() -> Optional[str]:
 def _post_graph(path: str, payload: dict) -> bool:
     token = _get_graph_token()
     if not token:
+        print(f"[EMAIL] ❌ Cannot send: no token available")
         return False
     url = f"https://graph.microsoft.com/v1.0{path}"
     body = json.dumps(payload).encode("utf-8")
     req = request.Request(url, data=body, method="POST")
     req.add_header("Authorization", f"Bearer {token}")
     req.add_header("Content-Type", "application/json")
+    print(f"[EMAIL] 📤 Posting to Graph: {path}")
     try:
         with request.urlopen(req, timeout=20) as resp:
             body = resp.read().decode("utf-8") if resp else ""
-            print(f"[EMAIL] Graph sendMail response: status={resp.status} body={body}")
-            return 200 <= resp.status < 300 or resp.status == 202
+            if 200 <= resp.status < 300 or resp.status == 202:
+                print(f"[EMAIL] ✅ Graph sendMail SUCCESS: status={resp.status}")
+                return True
+            else:
+                print(f"[EMAIL] ⚠️ Graph sendMail unexpected status: {resp.status}")
+                return False
     except error.HTTPError as e:
         try:
             msg = e.read().decode("utf-8")
-            print(f"[EMAIL] Graph sendMail error: {e.code} {msg}")
+            print(f"[EMAIL] ❌ Graph sendMail HTTP error {e.code}: {msg}")
         except Exception:
-            print(f"[EMAIL] Graph sendMail HTTPError: {e}")
+            print(f"[EMAIL] ❌ Graph sendMail HTTPError: {e}")
     except Exception as e:
-        print(f"[EMAIL] Graph sendMail exception: {e}")
+        print(f"[EMAIL] ❌ Graph sendMail exception: {type(e).__name__}: {e}")
     return False
 
 
