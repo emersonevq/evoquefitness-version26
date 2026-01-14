@@ -84,14 +84,40 @@ export function AdicionarUnidade() {
   );
 }
 
-function UnidadeCard({ nome, id }: { nome: string; id: number }) {
+function UnidadeCard({ nome, id, onDelete }: { nome: string; id: number; onDelete: (id: number) => void }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Tem certeza que deseja deletar a unidade "${nome}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/unidades/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erro ao deletar unidade");
+      onDelete(id);
+    } catch (e) {
+      alert("Não foi possível deletar a unidade");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-border/60 bg-card overflow-hidden hover:shadow-md hover:border-primary/20 transition-all">
-      <div className="px-4 py-3 border-b border-border/60 bg-muted/30 flex items-center gap-2">
-        <Package className="w-4 h-4 text-primary" />
-        <div className="font-semibold text-sm text-primary truncate">
-          {nome}
+      <div className="px-4 py-3 border-b border-border/60 bg-muted/30 flex items-center gap-2 justify-between">
+        <div className="flex items-center gap-2">
+          <Package className="w-4 h-4 text-primary" />
+          <div className="font-semibold text-sm text-primary truncate">
+            {nome}
+          </div>
         </div>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="p-1 hover:bg-destructive/10 rounded transition-colors disabled:opacity-50"
+          title="Deletar unidade"
+        >
+          <Trash2 className="w-4 h-4 text-destructive" />
+        </button>
       </div>
       <div className="p-4 space-y-2">
         <div className="flex items-center justify-between">
