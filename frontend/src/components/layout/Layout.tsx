@@ -230,7 +230,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Link to="/auth0/login">
                 <Button
                   variant="secondary"
-                  className="ml-2 hidden md:flex items-center gap-2 rounded-full px-3 py-1.5 text-sm"
+                  className="ml-2 hidden md:flex items-center gap-2 rounded-full px-3 py-1.5 text-sm h-10"
                 >
                   Fazer login
                 </Button>
