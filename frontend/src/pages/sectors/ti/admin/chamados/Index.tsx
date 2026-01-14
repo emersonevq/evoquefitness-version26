@@ -241,6 +241,7 @@ export default function ChamadosPage() {
   // Unit filter state
   const [selectedUnidades, setSelectedUnidades] = useState<string[]>([]);
   const [searchUnidade, setSearchUnidade] = useState("");
+  const [searchInputValue, setSearchInputValue] = useState("");
 
   useEffect(() => {
     apiFetch("/usuarios")
