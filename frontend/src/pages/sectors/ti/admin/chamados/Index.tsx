@@ -768,8 +768,8 @@ export default function ChamadosPage() {
             <input
               type="text"
               placeholder="Buscar unidade..."
-              value={searchUnidade}
-              onChange={(e) => setSearchUnidade(e.target.value)}
+              value={searchInputValue}
+              onChange={(e) => setSearchInputValue(e.target.value)}
               className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm"
             />
           </div>
