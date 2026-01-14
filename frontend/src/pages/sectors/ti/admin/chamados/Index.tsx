@@ -404,6 +404,29 @@ export default function ChamadosPage() {
     [items],
   );
 
+  const unidades = useMemo(() => {
+    const uniqueUnidades = Array.from(new Set(items.map((t) => t.unidade)))
+      .filter(Boolean)
+      .sort();
+    const filtered = uniqueUnidades.filter((u) =>
+      u.toLowerCase().includes(searchUnidade.toLowerCase()),
+    );
+    return filtered;
+  }, [items, searchUnidade]);
+
+  const handleToggleUnidade = (unidade: string) => {
+    setSelectedUnidades((prev) =>
+      prev.includes(unidade)
+        ? prev.filter((u) => u !== unidade)
+        : [...prev, unidade],
+    );
+  };
+
+  const handleClearUnidades = () => {
+    setSelectedUnidades([]);
+    setSearchUnidade("");
+  };
+
   const list = useMemo(() => {
     let filtered = items;
 
