@@ -160,7 +160,10 @@ export default function Index() {
                       const handleClick = (e: React.MouseEvent) => {
                         if (isFinanceiro) {
                           e.preventDefault();
-                          window.open("https://portalfinanceiro.cloud/", "_blank");
+                          window.open(
+                            "https://portalfinanceiro.cloud/",
+                            "_blank",
+                          );
                         }
                       };
 
@@ -171,11 +174,7 @@ export default function Index() {
                           : `/auth0/login?redirect=/setor/${s.slug}`;
 
                       return (
-                        <Link
-                          key={s.slug}
-                          to={href}
-                          onClick={handleClick}
-                        >
+                        <Link key={s.slug} to={href} onClick={handleClick}>
                           <DropdownMenuItem
                             className={`cursor-pointer text-sm transition-all ${
                               !user || allowed

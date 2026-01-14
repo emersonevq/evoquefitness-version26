@@ -56,9 +56,7 @@ export default function Login() {
                   <h1 className="text-2xl font-bold tracking-tight">
                     Bem vindo (a)
                   </h1>
-                  <p className="text-sm text-primary font-medium">
-                    Faça login
-                  </p>
+                  <p className="text-sm text-primary font-medium">Faça login</p>
                 </div>
               </div>
 
