@@ -54,17 +54,17 @@ export default function Login() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight">
-                    Central de suporte
+                    Portal Evoque
                   </h1>
                   <p className="text-sm text-primary font-medium">
-                    Sistema de Atendimento TI
+                    Login
                   </p>
                 </div>
               </div>
 
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Acesse o portal para abrir chamados, acompanhar solicitações e
-                obter suporte técnico especializado.
+                Faça login para acessar seus portais e gerenciar suas operações
+                com segurança.
               </p>
             </div>
 
@@ -130,8 +130,7 @@ export default function Login() {
             {/* Footer */}
             <div className="mt-6 pt-6 border-t">
               <p className="text-xs text-muted-foreground text-center">
-                © {new Date().getFullYear()} Central de suporte TI — Sistema
-                interno
+                © {new Date().getFullYear()} Portal Evoque — Sistema interno
               </p>
             </div>
           </div>
