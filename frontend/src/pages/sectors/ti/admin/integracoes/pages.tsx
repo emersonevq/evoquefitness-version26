@@ -333,6 +333,49 @@ function ProblemaCard({
   );
 }
 
+function ListProblemaItem({ problema, onDelete }: { problema: { id: number; nome: string; prioridade: string; requer_internet: boolean }; onDelete: (id: number) => void }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Tem certeza que deseja deletar o problema "${problema.nome}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/problemas/${problema.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erro ao deletar problema");
+      onDelete(problema.id);
+    } catch (e) {
+      alert("Não foi possível deletar o problema");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <Package className="w-4 h-4 text-primary flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <h4 className="font-medium text-sm truncate">
+            {problema.nome}
+          </h4>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {problema.prioridade}
+            {problema.requer_internet ? " • Internet" : ""}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={handleDelete}
+        disabled={deleting}
+        className="p-1 hover:bg-destructive/10 rounded transition-colors disabled:opacity-50 flex-shrink-0 ml-2"
+        title="Deletar problema"
+      >
+        <Trash2 className="w-4 h-4 text-destructive" />
+      </button>
+    </div>
+  );
+}
+
 export function AdicionarBanco() {
   type Problema = {
     id: number;
