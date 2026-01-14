@@ -161,7 +161,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `px-2 py-1 rounded-full text-xs font-medium ${
+                `px-3 py-1.5 rounded-full text-sm font-medium ${
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
