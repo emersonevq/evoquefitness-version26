@@ -192,7 +192,7 @@ export default function AdminLayout() {
         </aside>
 
         {/* Content */}
-        <div className="min-w-0">
+        <div className="min-w-0 flex flex-col">
           {/* Mobile menu */}
           <div className="mb-6 md:hidden">
             <Sheet>
