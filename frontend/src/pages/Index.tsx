@@ -155,11 +155,27 @@ export default function Index() {
                   <DropdownMenuContent align="center" className="w-40">
                     {sectors.map((s) => {
                       const allowed = canAccess(s.slug);
-                      const href = user
-                        ? `/setor/${s.slug}`
-                        : `/auth0/login?redirect=/setor/${s.slug}`;
+                      const isFinanceiro = s.slug === "financeiro";
+
+                      const handleClick = (e: React.MouseEvent) => {
+                        if (isFinanceiro) {
+                          e.preventDefault();
+                          window.open("https://portalfinanceiro.cloud/", "_blank");
+                        }
+                      };
+
+                      const href = isFinanceiro
+                        ? "#"
+                        : user
+                          ? `/setor/${s.slug}`
+                          : `/auth0/login?redirect=/setor/${s.slug}`;
+
                       return (
-                        <Link key={s.slug} to={href}>
+                        <Link
+                          key={s.slug}
+                          to={href}
+                          onClick={handleClick}
+                        >
                           <DropdownMenuItem
                             className={`cursor-pointer text-sm transition-all ${
                               !user || allowed
