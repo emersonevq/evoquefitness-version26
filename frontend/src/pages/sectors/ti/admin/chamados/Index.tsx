@@ -393,16 +393,19 @@ export default function ChamadosPage() {
     });
   }, []);
 
-  const counts = useMemo(
-    () => ({
-      todos: items.length,
-      abertos: items.filter((t) => t.status === "ABERTO").length,
-      aguardando: items.filter((t) => t.status === "EM_ANDAMENTO").length,
-      concluidos: items.filter((t) => t.status === "CONCLUIDO").length,
-      cancelados: items.filter((t) => t.status === "CANCELADO").length,
-    }),
-    [items],
-  );
+  const counts = useMemo(() => {
+    const baseItems = selectedUnidades.length > 0
+      ? items.filter((t) => selectedUnidades.includes(t.unidade))
+      : items;
+
+    return {
+      todos: baseItems.length,
+      abertos: baseItems.filter((t) => t.status === "ABERTO").length,
+      aguardando: baseItems.filter((t) => t.status === "EM_ANDAMENTO").length,
+      concluidos: baseItems.filter((t) => t.status === "CONCLUIDO").length,
+      cancelados: baseItems.filter((t) => t.status === "CANCELADO").length,
+    };
+  }, [items, selectedUnidades]);
 
   const unidades = useMemo(() => {
     const uniqueUnidades = Array.from(new Set(items.map((t) => t.unidade)))
