@@ -23,6 +23,8 @@ import {
   Image as ImageIcon,
   Grid3x3,
   List,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import { ticketsMock } from "../mock";
 import { apiFetch, API_BASE } from "@/lib/api";
@@ -236,6 +238,11 @@ export default function ChamadosPage() {
   const ticketsContainerRef = useRef<HTMLDivElement>(null);
   const loadMoreTicketsRef = useRef<HTMLDivElement>(null);
 
+  // Unit filter state
+  const [selectedUnidades, setSelectedUnidades] = useState<string[]>([]);
+  const [searchUnidade, setSearchUnidade] = useState("");
+  const [searchInputValue, setSearchInputValue] = useState("");
+
   useEffect(() => {
     apiFetch("/usuarios")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
@@ -386,33 +393,91 @@ export default function ChamadosPage() {
     });
   }, []);
 
-  const counts = useMemo(
-    () => ({
-      todos: items.length,
-      abertos: items.filter((t) => t.status === "ABERTO").length,
-      aguardando: items.filter((t) => t.status === "EM_ANDAMENTO").length,
-      concluidos: items.filter((t) => t.status === "CONCLUIDO").length,
-      cancelados: items.filter((t) => t.status === "CANCELADO").length,
-    }),
-    [items],
-  );
+  const counts = useMemo(() => {
+    let baseItems = items;
+
+    // Apply unit selection filter
+    if (selectedUnidades.length > 0) {
+      baseItems = baseItems.filter((t) => selectedUnidades.includes(t.unidade));
+    }
+
+    // Apply search input filter
+    if (searchInputValue.trim()) {
+      const searchLower = searchInputValue.toLowerCase();
+      baseItems = baseItems.filter((t) =>
+        t.unidade.toLowerCase().includes(searchLower),
+      );
+    }
+
+    return {
+      todos: baseItems.length,
+      abertos: baseItems.filter((t) => t.status === "ABERTO").length,
+      aguardando: baseItems.filter((t) => t.status === "EM_ANDAMENTO").length,
+      concluidos: baseItems.filter((t) => t.status === "CONCLUIDO").length,
+      cancelados: baseItems.filter((t) => t.status === "CANCELADO").length,
+    };
+  }, [items, selectedUnidades, searchInputValue]);
+
+  const unidades = useMemo(() => {
+    const uniqueUnidades = Array.from(new Set(items.map((t) => t.unidade)))
+      .filter(Boolean)
+      .sort();
+    const filtered = uniqueUnidades.filter((u) =>
+      u.toLowerCase().includes(searchUnidade.toLowerCase()),
+    );
+    return filtered;
+  }, [items, searchUnidade]);
+
+  const handleToggleUnidade = (unidade: string) => {
+    setSelectedUnidades((prev) =>
+      prev.includes(unidade)
+        ? prev.filter((u) => u !== unidade)
+        : [...prev, unidade],
+    );
+  };
+
+  const handleClearUnidades = () => {
+    setSelectedUnidades([]);
+    setSearchUnidade("");
+  };
 
   const list = useMemo(() => {
+    let filtered = items;
+
+    // Apply status filter
     switch (filtro) {
       case "abertos":
-        return items.filter((t) => t.status === "ABERTO");
+        filtered = filtered.filter((t) => t.status === "ABERTO");
+        break;
       case "em-andamento":
-        return items.filter((t) => t.status === "EM_ANDAMENTO");
+        filtered = filtered.filter((t) => t.status === "EM_ANDAMENTO");
+        break;
       case "em-analise":
-        return items.filter((t) => t.status === "EM_ANALISE");
+        filtered = filtered.filter((t) => t.status === "EM_ANALISE");
+        break;
       case "concluidos":
-        return items.filter((t) => t.status === "CONCLUIDO");
+        filtered = filtered.filter((t) => t.status === "CONCLUIDO");
+        break;
       case "cancelados":
-        return items.filter((t) => t.status === "CANCELADO");
-      default:
-        return items;
+        filtered = filtered.filter((t) => t.status === "CANCELADO");
+        break;
     }
-  }, [filtro, items]);
+
+    // Apply unit filter
+    if (selectedUnidades.length > 0) {
+      filtered = filtered.filter((t) => selectedUnidades.includes(t.unidade));
+    }
+
+    // Apply search input filter (search by unit name)
+    if (searchInputValue.trim()) {
+      const searchLower = searchInputValue.toLowerCase();
+      filtered = filtered.filter((t) =>
+        t.unidade.toLowerCase().includes(searchLower),
+      );
+    }
+
+    return filtered;
+  }, [filtro, items, selectedUnidades, searchInputValue]);
 
   // Infinite scroll para tickets
   useEffect(() => {
@@ -635,7 +700,7 @@ export default function ChamadosPage() {
   }
 
   return (
-    <div className="space-y-6 h-[calc(100vh-8rem)] flex flex-col">
+    <div className="space-y-4 flex flex-col h-full">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 flex-shrink-0">
         <SummaryCard
@@ -666,52 +731,130 @@ export default function ChamadosPage() {
       </div>
 
       {/* Filters and View Toggle */}
-      <div className="flex flex-wrap gap-2 flex-shrink-0 items-center justify-between">
-        <div className="flex flex-wrap gap-2">
-          {statusMap.map((s) => (
-            <NavLink
-              key={s.key}
-              to={`/setor/ti/admin/chamados/${s.key}`}
-              className={({ isActive }) =>
-                `rounded-full px-3 py-1.5 text-sm border transition-colors ${isActive ? "bg-primary text-primary-foreground border-transparent" : "bg-secondary hover:bg-secondary/80"}`
-              }
+      <div className="flex-shrink-0 space-y-2">
+        {/* Status Filters + View Toggle */}
+        <div className="flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex flex-wrap gap-2">
+            {statusMap.map((s) => (
+              <NavLink
+                key={s.key}
+                to={`/setor/ti/admin/chamados/${s.key}`}
+                className={({ isActive }) =>
+                  `rounded-full px-3 py-1.5 text-sm border transition-colors ${isActive ? "bg-primary text-primary-foreground border-transparent" : "bg-secondary hover:bg-secondary/80"}`
+                }
+              >
+                {s.label}
+              </NavLink>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={viewMode === "grid" ? "default" : "secondary"}
+              onClick={() => setViewMode("grid")}
+              size="sm"
+              className="inline-flex items-center gap-2"
             >
-              {s.label}
-            </NavLink>
-          ))}
+              <Grid3x3 className="h-4 w-4" />
+              Grade
+            </Button>
+            <Button
+              type="button"
+              variant={viewMode === "list" ? "default" : "secondary"}
+              onClick={() => setViewMode("list")}
+              size="sm"
+              className="inline-flex items-center gap-2"
+            >
+              <List className="h-4 w-4" />
+              Lista
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant={viewMode === "grid" ? "default" : "secondary"}
-            onClick={() => setViewMode("grid")}
-            size="sm"
-            className="inline-flex items-center gap-2"
-          >
-            <Grid3x3 className="h-4 w-4" />
-            Grade
-          </Button>
-          <Button
-            type="button"
-            variant={viewMode === "list" ? "default" : "secondary"}
-            onClick={() => setViewMode("list")}
-            size="sm"
-            className="inline-flex items-center gap-2"
-          >
-            <List className="h-4 w-4" />
-            Lista
-          </Button>
+
+        {/* Unit Filter - Search Bar + Dropdown Button */}
+        <div className="flex items-center gap-2">
+          {/* Search Input */}
+          <div className="flex-1 relative max-w-sm">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Buscar unidade..."
+              value={searchInputValue}
+              onChange={(e) => setSearchInputValue(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-sm"
+            />
+            {searchInputValue && (
+              <button
+                onClick={() => setSearchInputValue("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Unit Dropdown Button */}
+          <div className="relative group">
+            <button className="h-9 px-3 text-sm font-medium bg-secondary hover:bg-secondary/80 border border-border/60 rounded-md inline-flex items-center gap-1.5 transition-colors">
+              Unidades
+              {selectedUnidades.length > 0 && (
+                <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs font-bold ml-0.5">
+                  {selectedUnidades.length}
+                </span>
+              )}
+              <ChevronDown className="h-4 w-4 opacity-70" />
+            </button>
+
+            {/* Dropdown Menu */}
+            <div className="absolute right-0 mt-1 w-56 bg-card border border-border/60 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="p-2 max-h-80 overflow-y-auto space-y-1">
+                {unidades.length > 0 ? (
+                  <>
+                    {unidades.map((unidade) => (
+                      <label
+                        key={unidade}
+                        className="flex items-center gap-2 px-2.5 py-1.5 text-sm cursor-pointer hover:bg-muted/50 rounded transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedUnidades.includes(unidade)}
+                          onChange={() => handleToggleUnidade(unidade)}
+                          className="h-4 w-4 rounded border-input accent-primary cursor-pointer"
+                        />
+                        <span className="flex-1 truncate">{unidade}</span>
+                      </label>
+                    ))}
+                    {selectedUnidades.length > 0 && (
+                      <>
+                        <div className="h-px bg-border/30 my-1" />
+                        <button
+                          onClick={handleClearUnidades}
+                          className="w-full text-xs font-medium text-primary hover:bg-muted/50 px-2.5 py-1.5 rounded transition-colors text-left"
+                        >
+                          Limpar filtros
+                        </button>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-3">
+                    Nenhuma unidade encontrada
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Tickets Grid/List com Scroll Infinito */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <div
           ref={ticketsContainerRef}
           className="h-full overflow-y-auto pr-2 -mr-2"
         >
           {viewMode === "grid" && (
-            <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 pb-4">
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 pb-4 w-full">
               {list.slice(0, visibleTickets).map((t) => (
                 <div
                   key={t.id}

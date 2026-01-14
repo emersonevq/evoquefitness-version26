@@ -127,7 +127,7 @@ export default function AdminLayout() {
         </div>
       </section>
 
-      <section className="container py-6 grid grid-cols-1 md:grid-cols-[300px,1fr] gap-8">
+      <section className="container py-6 grid grid-cols-1 md:grid-cols-[300px,1fr] gap-8 flex-1 min-h-0">
         {/* Sidebar Desktop */}
         <aside className="hidden md:block">
           <nav className="sticky top-24 space-y-4">
@@ -192,7 +192,7 @@ export default function AdminLayout() {
         </aside>
 
         {/* Content */}
-        <div className="min-w-0">
+        <div className="min-w-0 flex flex-col">
           {/* Mobile menu */}
           <div className="mb-6 md:hidden">
             <Sheet>
@@ -248,7 +248,9 @@ export default function AdminLayout() {
             </Sheet>
           </div>
 
-          <Outlet />
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <Outlet />
+          </div>
         </div>
       </section>
     </Layout>
