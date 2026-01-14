@@ -821,7 +821,7 @@ export default function ChamadosPage() {
       </div>
 
       {/* Tickets Grid/List com Scroll Infinito */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <div
           ref={ticketsContainerRef}
           className="h-full overflow-y-auto pr-2 -mr-2"
