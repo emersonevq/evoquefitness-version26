@@ -405,7 +405,7 @@ export default function ChamadosPage() {
     if (searchInputValue.trim()) {
       const searchLower = searchInputValue.toLowerCase();
       baseItems = baseItems.filter((t) =>
-        t.unidade.toLowerCase().includes(searchLower)
+        t.unidade.toLowerCase().includes(searchLower),
       );
     }
 
@@ -472,7 +472,7 @@ export default function ChamadosPage() {
     if (searchInputValue.trim()) {
       const searchLower = searchInputValue.toLowerCase();
       filtered = filtered.filter((t) =>
-        t.unidade.toLowerCase().includes(searchLower)
+        t.unidade.toLowerCase().includes(searchLower),
       );
     }
 
