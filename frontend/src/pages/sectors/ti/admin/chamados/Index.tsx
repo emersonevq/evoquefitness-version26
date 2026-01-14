@@ -711,7 +711,7 @@ export default function ChamadosPage() {
       </div>
 
       {/* Filters and View Toggle */}
-      <div className="space-y-3 flex-shrink-0">
+      <div className="flex-shrink-0 space-y-2">
         {/* Status Filters + View Toggle */}
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <div className="flex flex-wrap gap-2">
