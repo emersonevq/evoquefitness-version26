@@ -127,7 +127,7 @@ export default function AdminLayout() {
         </div>
       </section>
 
-      <section className="container py-6 grid grid-cols-1 md:grid-cols-[300px,1fr] gap-8">
+      <section className="container py-6 grid grid-cols-1 md:grid-cols-[300px,1fr] gap-8 flex-1 min-h-0">
         {/* Sidebar Desktop */}
         <aside className="hidden md:block">
           <nav className="sticky top-24 space-y-4">
