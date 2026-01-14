@@ -54,10 +54,10 @@ export default function Login() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight">
-                    Portal Evoque
+                    Bem vindo
                   </h1>
                   <p className="text-sm text-primary font-medium">
-                    Login
+                    Faça login
                   </p>
                 </div>
               </div>
