@@ -371,11 +371,11 @@ export function CriarUsuario() {
                 <div className="text-xs font-medium text-muted-foreground mb-2">
                   Selecione um dashboard do Portal de bi
                 </div>
-                <div className="rounded-md border border-border/40 p-3 space-y-2 text-sm bg-muted/30">
+                <div className="rounded-md border border-border/40 p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-muted/30">
                   {biSubcategories.map((sub: any) => (
                     <label
                       key={sub.dashboard_id}
-                      className="inline-flex items-center gap-2 cursor-pointer"
+                      className="flex items-start gap-3 cursor-pointer"
                     >
                       <input
                         type="radio"
@@ -1323,11 +1323,11 @@ export function Permissoes() {
                     <div className="text-xs font-medium text-muted-foreground mb-2">
                       Dashboards do Portal de bi
                     </div>
-                    <div className="rounded-md border border-border/40 p-3 grid grid-cols-1 gap-2 text-sm bg-muted/30">
+                    <div className="rounded-md border border-border/40 p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-muted/30">
                       {biSubcategories.map((sub: any) => (
                         <label
                           key={sub.dashboard_id}
-                          className="inline-flex items-center gap-2"
+                          className="flex items-start gap-3"
                         >
                           <input
                             type="checkbox"
