@@ -751,8 +751,8 @@ export default function ChamadosPage() {
           </div>
         </div>
 
-        {/* Unit Filter - Compact Horizontal Layout */}
-        <div className="flex items-center gap-2 w-full">
+        {/* Unit Filter - Search with Dropdown Results */}
+        <div className="flex items-start gap-2 w-full relative">
           <div className="flex-1 relative max-w-sm">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
@@ -762,61 +762,55 @@ export default function ChamadosPage() {
               onChange={(e) => setSearchUnidade(e.target.value)}
               className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm"
             />
-          </div>
 
-          {/* Unit Dropdown */}
-          <div className="relative group">
-            <button
-              className="h-9 px-3 text-sm font-medium bg-secondary hover:bg-secondary/80 border border-border/60 rounded-md inline-flex items-center gap-1.5 transition-colors"
-            >
-              Unidades
-              {selectedUnidades.length > 0 && (
-                <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs font-bold ml-0.5">
-                  {selectedUnidades.length}
-                </span>
-              )}
-              <ChevronDown className="h-4 w-4 opacity-70" />
-            </button>
-
-            {/* Dropdown Menu */}
-            <div className="absolute left-0 mt-1 w-56 bg-card border border-border/60 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div className="p-2 max-h-80 overflow-y-auto space-y-1">
-                {unidades.length > 0 ? (
-                  <>
-                    {unidades.map((unidade) => (
-                      <label
-                        key={unidade}
-                        className="flex items-center gap-2 px-2.5 py-1.5 text-sm cursor-pointer hover:bg-muted/50 rounded transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedUnidades.includes(unidade)}
-                          onChange={() => handleToggleUnidade(unidade)}
-                          className="h-4 w-4 rounded border-input accent-primary cursor-pointer"
-                        />
-                        <span className="flex-1 truncate">{unidade}</span>
-                      </label>
-                    ))}
-                    {selectedUnidades.length > 0 && (
-                      <>
-                        <div className="h-px bg-border/30 my-1" />
-                        <button
-                          onClick={handleClearUnidades}
-                          className="w-full text-xs font-medium text-primary hover:bg-muted/50 px-2.5 py-1.5 rounded transition-colors text-left"
+            {/* Dropdown List - Always visible when searching or selecting */}
+            {(searchUnidade || unidades.length > 0) && (
+              <div className="absolute top-full left-0 mt-1 w-full bg-card border border-border/60 rounded-md shadow-lg z-50">
+                <div className="p-2 max-h-80 overflow-y-auto space-y-1">
+                  {unidades.length > 0 ? (
+                    <>
+                      {unidades.map((unidade) => (
+                        <label
+                          key={unidade}
+                          className="flex items-center gap-2 px-2.5 py-1.5 text-sm cursor-pointer hover:bg-muted/50 rounded transition-colors"
                         >
-                          Limpar filtros
-                        </button>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-xs text-muted-foreground text-center py-3">
-                    Nenhuma unidade encontrada
-                  </p>
-                )}
+                          <input
+                            type="checkbox"
+                            checked={selectedUnidades.includes(unidade)}
+                            onChange={() => handleToggleUnidade(unidade)}
+                            className="h-4 w-4 rounded border-input accent-primary cursor-pointer"
+                          />
+                          <span className="flex-1 truncate">{unidade}</span>
+                        </label>
+                      ))}
+                      {selectedUnidades.length > 0 && (
+                        <>
+                          <div className="h-px bg-border/30 my-1" />
+                          <button
+                            onClick={handleClearUnidades}
+                            className="w-full text-xs font-medium text-primary hover:bg-muted/50 px-2.5 py-1.5 rounded transition-colors text-left"
+                          >
+                            Limpar filtros
+                          </button>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground text-center py-3">
+                      Nenhuma unidade encontrada
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
+
+          {/* Selected Units Badge */}
+          {selectedUnidades.length > 0 && (
+            <div className="inline-flex items-center gap-1.5 h-9 px-3 bg-primary/10 border border-primary/30 rounded-md text-sm font-medium text-primary whitespace-nowrap">
+              <span>{selectedUnidades.length} selecionada{selectedUnidades.length !== 1 ? 's' : ''}</span>
+            </div>
+          )}
         </div>
       </div>
 
