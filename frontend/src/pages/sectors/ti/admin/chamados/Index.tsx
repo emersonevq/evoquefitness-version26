@@ -405,21 +405,34 @@ export default function ChamadosPage() {
   );
 
   const list = useMemo(() => {
+    let filtered = items;
+
+    // Apply status filter
     switch (filtro) {
       case "abertos":
-        return items.filter((t) => t.status === "ABERTO");
+        filtered = filtered.filter((t) => t.status === "ABERTO");
+        break;
       case "em-andamento":
-        return items.filter((t) => t.status === "EM_ANDAMENTO");
+        filtered = filtered.filter((t) => t.status === "EM_ANDAMENTO");
+        break;
       case "em-analise":
-        return items.filter((t) => t.status === "EM_ANALISE");
+        filtered = filtered.filter((t) => t.status === "EM_ANALISE");
+        break;
       case "concluidos":
-        return items.filter((t) => t.status === "CONCLUIDO");
+        filtered = filtered.filter((t) => t.status === "CONCLUIDO");
+        break;
       case "cancelados":
-        return items.filter((t) => t.status === "CANCELADO");
-      default:
-        return items;
+        filtered = filtered.filter((t) => t.status === "CANCELADO");
+        break;
     }
-  }, [filtro, items]);
+
+    // Apply unit filter
+    if (selectedUnidades.length > 0) {
+      filtered = filtered.filter((t) => selectedUnidades.includes(t.unidade));
+    }
+
+    return filtered;
+  }, [filtro, items, selectedUnidades]);
 
   // Infinite scroll para tickets
   useEffect(() => {
