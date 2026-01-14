@@ -212,32 +212,7 @@ export function ListarUnidades() {
             {viewMode === "list" && (
               <div className="space-y-2">
                 {items.map((u) => (
-                  <div
-                    key={`${u.id}-${u.nome}`}
-                    className="rounded-lg border border-border/60 bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <Package className="w-4 h-4 text-primary flex-shrink-0" />
-                      <h4 className="font-medium text-sm truncate">{u.nome}</h4>
-                    </div>
-                    <div className="flex items-center gap-3 whitespace-nowrap ml-2">
-                      <div className="text-xs text-muted-foreground">
-                        ID: {u.id}
-                      </div>
-                      <button
-                        onClick={() => handleDeleteUnidade(u.id) || (
-                          confirm(`Tem certeza que deseja deletar a unidade "${u.nome}"?`) &&
-                          apiFetch(`/unidades/${u.id}`, { method: "DELETE" })
-                            .then((res) => res.ok ? handleDeleteUnidade(u.id) : alert("Erro ao deletar"))
-                            .catch(() => alert("Não foi possível deletar a unidade"))
-                        )}
-                        className="p-1 hover:bg-destructive/10 rounded transition-colors"
-                        title="Deletar unidade"
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </button>
-                    </div>
-                  </div>
+                  <ListUnidadeItem key={`${u.id}-${u.nome}`} unidade={u} onDelete={handleDeleteUnidade} />
                 ))}
               </div>
             )}
