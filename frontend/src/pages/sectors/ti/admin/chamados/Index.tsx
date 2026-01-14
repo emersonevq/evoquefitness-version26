@@ -827,7 +827,7 @@ export default function ChamadosPage() {
           className="h-full overflow-y-auto pr-2 -mr-2"
         >
           {viewMode === "grid" && (
-            <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 pb-4">
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 pb-4 w-full">
               {list.slice(0, visibleTickets).map((t) => (
                 <div
                   key={t.id}
