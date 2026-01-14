@@ -680,7 +680,7 @@ export default function ChamadosPage() {
   }
 
   return (
-    <div className="space-y-4 flex flex-col min-h-screen">
+    <div className="space-y-4 flex flex-col h-full">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 flex-shrink-0">
         <SummaryCard
