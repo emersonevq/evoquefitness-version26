@@ -7,6 +7,36 @@ from ti.schemas.problema import ProblemaCreate, ProblemaUpdate
 
 VALID_PRIORIDADES = {"Crítica", "Alta", "Normal", "Baixa"}
 
+def deletar_problema(db: Session, problema_id: int) -> dict:
+    """
+    Deleta um problema do banco de dados.
+    Tenta a tabela legada 'problema_reportado' primeiro, depois a tabela ORM.
+    """
+    try:
+        # Tentar deletar da tabela legada
+        res = db.execute(
+            text("DELETE FROM problema_reportado WHERE id = :id"),
+            {"id": problema_id},
+        )
+        db.commit()
+        if res.rowcount and res.rowcount > 0:
+            return {"sucesso": True, "mensagem": f"Problema {problema_id} deletado com sucesso"}
+    except Exception as e:
+        print(f"⚠️  Erro ao deletar da tabela legada: {e}")
+        db.rollback()
+
+    # Fallback: tentar deletar via ORM
+    try:
+        problema = db.query(Problema).filter(Problema.id == problema_id).first()
+        if not problema:
+            raise ValueError(f"Problema com ID {problema_id} não encontrado")
+        db.delete(problema)
+        db.commit()
+        return {"sucesso": True, "mensagem": f"Problema {problema_id} deletado com sucesso"}
+    except Exception as e:
+        db.rollback()
+        raise ValueError(f"Erro ao deletar problema: {e}")
+
 def criar_problema(db: Session, payload: ProblemaCreate) -> Problema:
     nome = (payload.nome or "").strip()
     if not nome:

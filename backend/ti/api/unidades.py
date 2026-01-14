@@ -112,3 +112,14 @@ def criar_unidade(payload: UnidadeCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao criar unidade: {e}")
+
+@router.delete("/{unidade_id}")
+def deletar_unidade(unidade_id: int, db: Session = Depends(get_db)):
+    try:
+        from ti.services.unidades import deletar_unidade as service_deletar
+        result = service_deletar(db, unidade_id)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar unidade: {e}")

@@ -5,6 +5,38 @@ from typing import Any, Dict
 from ti.schemas.unidade import UnidadeCreate
 
 
+def deletar_unidade(db: Session, unidade_id: int) -> Dict[str, Any]:
+    """
+    Deleta uma unidade do banco de dados.
+    Tenta a tabela legada 'unidade' primeiro, depois a tabela ORM.
+    """
+    try:
+        # Tentar deletar da tabela legada
+        res = db.execute(
+            text("DELETE FROM unidade WHERE id = :id"),
+            {"id": unidade_id},
+        )
+        db.commit()
+        if res.rowcount and res.rowcount > 0:
+            return {"sucesso": True, "mensagem": f"Unidade {unidade_id} deletada com sucesso"}
+    except Exception as e:
+        print(f"⚠️  Erro ao deletar da tabela legada: {e}")
+        db.rollback()
+
+    # Fallback: tentar deletar via ORM
+    try:
+        from ..models import Unidade
+        unidade = db.query(Unidade).filter(Unidade.id == unidade_id).first()
+        if not unidade:
+            raise ValueError(f"Unidade com ID {unidade_id} não encontrada")
+        db.delete(unidade)
+        db.commit()
+        return {"sucesso": True, "mensagem": f"Unidade {unidade_id} deletada com sucesso"}
+    except Exception as e:
+        db.rollback()
+        raise ValueError(f"Erro ao deletar unidade: {e}")
+
+
 def criar_unidade(db: Session, payload: UnidadeCreate) -> Dict[str, Any]:
     nome = (payload.nome or "").strip()
     if not nome:

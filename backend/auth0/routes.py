@@ -105,18 +105,29 @@ def auth0_exchange(request: Auth0ExchangeRequest, db: Session = Depends(get_db))
         print(f"[AUTH0-EXCHANGE] Exchanging code with Auth0...")
         print(f"[AUTH0-EXCHANGE] Token URL: {AUTH0_TOKEN_URL}")
         print(f"[AUTH0-EXCHANGE] Client ID: {AUTH0_CLIENT_ID[:10]}...")
+        print(f"[AUTH0-EXCHANGE] Audience: {AUTH0_AUDIENCE}")  # ✅ LOG ADICIONADO
+
+        # ✅ CORREÇÃO: Construir payload com audience se configurado
+        token_payload = {
+            "client_id": AUTH0_CLIENT_ID,
+            "client_secret": AUTH0_CLIENT_SECRET,
+            "code": request.code,
+            "grant_type": "authorization_code",
+            "redirect_uri": request.redirect_uri,
+        }
+
+        # Adicionar audience apenas se estiver configurado
+        if AUTH0_AUDIENCE:
+            token_payload["audience"] = AUTH0_AUDIENCE
+            print(f"[AUTH0-EXCHANGE] ✓ Including audience in token request: {AUTH0_AUDIENCE}")
+        else:
+            print(f"[AUTH0-EXCHANGE] ⚠️  No audience configured - proceeding without it")
 
         print(f"[AUTH0-EXCHANGE] Request body: code={request.code[:20]}..., redirect_uri={request.redirect_uri}")
 
         token_response = requests.post(
             AUTH0_TOKEN_URL,
-            json={
-                "client_id": AUTH0_CLIENT_ID,
-                "client_secret": AUTH0_CLIENT_SECRET,
-                "code": request.code,
-                "grant_type": "authorization_code",
-                "redirect_uri": request.redirect_uri,
-            },
+            json=token_payload,  # ✅ Usar payload com audience
             timeout=10,
         )
 
@@ -133,24 +144,28 @@ def auth0_exchange(request: Auth0ExchangeRequest, db: Session = Depends(get_db))
 
         token_data = token_response.json()
         print(f"[AUTH0-EXCHANGE] Token response keys: {list(token_data.keys())}")
-        print(f"[AUTH0-EXCHANGE] Full response: {token_data}")
 
+        # ✅ CORREÇÃO PRINCIPAL: Usar id_token em vez de access_token
         access_token = token_data.get("access_token")
+        id_token = token_data.get("id_token")  # ✅ ADICIONAR
 
-        if not access_token:
-            print(f"[AUTH0-EXCHANGE] ✗ No access token in response")
+        if not id_token:  # ✅ MUDAR PARA id_token
+            print(f"[AUTH0-EXCHANGE] ✗ No id_token in response")
             print(f"[AUTH0-EXCHANGE] Available keys: {list(token_data.keys())}")
             raise HTTPException(
                 status_code=400,
-                detail="No access token in response"
+                detail="No id_token in response"
             )
 
-        print(f"[AUTH0-EXCHANGE] ✓ Got access token: {access_token[:20]}...")
-        print(f"[AUTH0-EXCHANGE] Access token length: {len(access_token)}")
+        print(f"[AUTH0-EXCHANGE] ✓ Got access token: {access_token[:20] if access_token else 'None'}...")
+        print(f"[AUTH0-EXCHANGE] ✓ Got id_token: {id_token[:20]}...")  # ✅ ADICIONAR
+        if access_token:
+            print(f"[AUTH0-EXCHANGE] Access token length: {len(access_token)}")
+        print(f"[AUTH0-EXCHANGE] ID token length: {len(id_token)}")  # ✅ ADICIONAR
 
-        # Verify token and extract payload
-        print(f"[AUTH0-EXCHANGE] Verifying token...")
-        payload = verify_auth0_token(access_token)
+        # ✅ CORREÇÃO: Verificar id_token em vez de access_token
+        print(f"[AUTH0-EXCHANGE] Verifying id_token...")  # ✅ MUDAR LOG
+        payload = verify_auth0_token(id_token)  # ✅ USAR id_token
         print(f"[AUTH0-EXCHANGE] ✓ Token verified")
         print(f"[AUTH0-EXCHANGE] Token payload keys: {list(payload.keys())}")
 
@@ -231,6 +246,7 @@ def auth0_exchange(request: Auth0ExchangeRequest, db: Session = Depends(get_db))
         if not user_nome:
             user_nome = user.email.split("@")[0]
 
+        # ✅ IMPORTANTE: Retornar access_token (para criar sessão) mas validar com id_token
         response = {
             "id": user.id,
             "nome": user_nome,
@@ -239,7 +255,7 @@ def auth0_exchange(request: Auth0ExchangeRequest, db: Session = Depends(get_db))
             "nivel_acesso": user.nivel_acesso,
             "setores": setores_list,
             "bi_subcategories": bi_subcategories_list,
-            "access_token": access_token,
+            "access_token": access_token if access_token else id_token,  # ✅ Usar access_token se disponível
         }
 
         print(f"[AUTH0-EXCHANGE] ✓ Returning response:")
@@ -249,7 +265,7 @@ def auth0_exchange(request: Auth0ExchangeRequest, db: Session = Depends(get_db))
         print(f"[AUTH0-EXCHANGE]   - Access level: {response['nivel_acesso']}")
         print(f"[AUTH0-EXCHANGE]   - BI Subcategories: {response['bi_subcategories']}")
         print(f"[AUTH0-EXCHANGE]   - Access token (first 30 chars): {response['access_token'][:30]}...")
-        print(f"{'='*60}\n")
+        print(f"{'='*70}\n")
 
         return response
 

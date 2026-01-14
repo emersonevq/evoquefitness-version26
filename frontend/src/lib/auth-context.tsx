@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         client_id: import.meta.env.VITE_AUTH0_CLIENT_ID,
         redirect_uri: import.meta.env.VITE_AUTH0_REDIRECT_URI,
         scope: "openid profile email offline_access",
-        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+        // audience: import.meta.env.VITE_AUTH0_AUDIENCE,  // ← REMOVIDO - API não configurada no tenant
         state: state,
         prompt: "none", // Don't show login UI if already authenticated
       };
@@ -656,7 +656,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         client_id: import.meta.env.VITE_AUTH0_CLIENT_ID,
         redirect_uri: import.meta.env.VITE_AUTH0_REDIRECT_URI,
         scope: "openid profile email offline_access",
-        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+        // audience: import.meta.env.VITE_AUTH0_AUDIENCE,  // ← REMOVIDO - API não configurada no tenant
         state: state,
       };
 

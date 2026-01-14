@@ -84,14 +84,80 @@ export function AdicionarUnidade() {
   );
 }
 
-function UnidadeCard({ nome, id }: { nome: string; id: number }) {
+function ListUnidadeItem({ unidade, onDelete }: { unidade: { id: number; nome: string }; onDelete: (id: number) => void }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Tem certeza que deseja deletar a unidade "${unidade.nome}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/unidades/${unidade.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erro ao deletar unidade");
+      onDelete(unidade.id);
+    } catch (e) {
+      alert("Não foi possível deletar a unidade");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <Package className="w-4 h-4 text-primary flex-shrink-0" />
+        <h4 className="font-medium text-sm truncate">{unidade.nome}</h4>
+      </div>
+      <div className="flex items-center gap-3 whitespace-nowrap ml-2">
+        <div className="text-xs text-muted-foreground">
+          ID: {unidade.id}
+        </div>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="p-1 hover:bg-destructive/10 rounded transition-colors disabled:opacity-50"
+          title="Deletar unidade"
+        >
+          <Trash2 className="w-4 h-4 text-destructive" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function UnidadeCard({ nome, id, onDelete }: { nome: string; id: number; onDelete: (id: number) => void }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Tem certeza que deseja deletar a unidade "${nome}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/unidades/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erro ao deletar unidade");
+      onDelete(id);
+    } catch (e) {
+      alert("Não foi possível deletar a unidade");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-border/60 bg-card overflow-hidden hover:shadow-md hover:border-primary/20 transition-all">
-      <div className="px-4 py-3 border-b border-border/60 bg-muted/30 flex items-center gap-2">
-        <Package className="w-4 h-4 text-primary" />
-        <div className="font-semibold text-sm text-primary truncate">
-          {nome}
+      <div className="px-4 py-3 border-b border-border/60 bg-muted/30 flex items-center gap-2 justify-between">
+        <div className="flex items-center gap-2">
+          <Package className="w-4 h-4 text-primary" />
+          <div className="font-semibold text-sm text-primary truncate">
+            {nome}
+          </div>
         </div>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="p-1 hover:bg-destructive/10 rounded transition-colors disabled:opacity-50"
+          title="Deletar unidade"
+        >
+          <Trash2 className="w-4 h-4 text-destructive" />
+        </button>
       </div>
       <div className="p-4 space-y-2">
         <div className="flex items-center justify-between">
@@ -109,13 +175,22 @@ export function ListarUnidades() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
     apiFetch("/unidades")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
       .then((data: Unidade[]) => Array.isArray(data) && setItems(data))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
+
+  const handleDeleteUnidade = (deletedId: number) => {
+    setItems((prev) => prev.filter((u) => u.id !== deletedId));
+  };
 
   return (
     <Card className="p-4">
@@ -169,6 +244,7 @@ export function ListarUnidades() {
                     key={`${u.id}-${u.nome}`}
                     id={u.id}
                     nome={u.nome}
+                    onDelete={handleDeleteUnidade}
                   />
                 ))}
               </div>
@@ -176,18 +252,7 @@ export function ListarUnidades() {
             {viewMode === "list" && (
               <div className="space-y-2">
                 {items.map((u) => (
-                  <div
-                    key={`${u.id}-${u.nome}`}
-                    className="rounded-lg border border-border/60 bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <Package className="w-4 h-4 text-primary flex-shrink-0" />
-                      <h4 className="font-medium text-sm truncate">{u.nome}</h4>
-                    </div>
-                    <div className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                      ID: {u.id}
-                    </div>
-                  </div>
+                  <ListUnidadeItem key={`${u.id}-${u.nome}`} unidade={u} onDelete={handleDeleteUnidade} />
                 ))}
               </div>
             )}
@@ -199,14 +264,19 @@ export function ListarUnidades() {
 }
 
 function ProblemaCard({
+  id,
   nome,
   prioridade,
   requerInternet,
+  onDelete,
 }: {
+  id: number;
   nome: string;
   prioridade: string;
   requerInternet: boolean;
+  onDelete: (id: number) => void;
 }) {
+  const [deleting, setDeleting] = useState(false);
   const priorityColor = {
     Normal: "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
     Alta: "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
@@ -215,17 +285,41 @@ function ProblemaCard({
       "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300",
   } as Record<string, string>;
 
+  const handleDelete = async () => {
+    if (!confirm(`Tem certeza que deseja deletar o problema "${nome}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/problemas/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erro ao deletar problema");
+      onDelete(id);
+    } catch (e) {
+      alert("Não foi possível deletar o problema");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-border/60 bg-card overflow-hidden hover:shadow-md hover:border-primary/20 transition-all">
       <div className="px-4 py-3 border-b border-border/60 bg-muted/30 flex items-center gap-2 justify-between">
         <div className="font-semibold text-sm text-primary truncate">
           {nome}
         </div>
-        <span
-          className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 whitespace-nowrap ${priorityColor[prioridade] || priorityColor.Normal}`}
-        >
-          {prioridade}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 whitespace-nowrap ${priorityColor[prioridade] || priorityColor.Normal}`}
+          >
+            {prioridade}
+          </span>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="p-1 hover:bg-destructive/10 rounded transition-colors disabled:opacity-50"
+            title="Deletar problema"
+          >
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </button>
+        </div>
       </div>
       <div className="p-4">
         {requerInternet && (
@@ -235,6 +329,49 @@ function ProblemaCard({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ListProblemaItem({ problema, onDelete }: { problema: { id: number; nome: string; prioridade: string; requer_internet: boolean }; onDelete: (id: number) => void }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Tem certeza que deseja deletar o problema "${problema.nome}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/problemas/${problema.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erro ao deletar problema");
+      onDelete(problema.id);
+    } catch (e) {
+      alert("Não foi possível deletar o problema");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <Package className="w-4 h-4 text-primary flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <h4 className="font-medium text-sm truncate">
+            {problema.nome}
+          </h4>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {problema.prioridade}
+            {problema.requer_internet ? " • Internet" : ""}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={handleDelete}
+        disabled={deleting}
+        className="p-1 hover:bg-destructive/10 rounded transition-colors disabled:opacity-50 flex-shrink-0 ml-2"
+        title="Deletar problema"
+      >
+        <Trash2 className="w-4 h-4 text-destructive" />
+      </button>
     </div>
   );
 }
@@ -282,6 +419,10 @@ export function AdicionarBanco() {
   useEffect(() => {
     load();
   }, []);
+
+  const handleDeleteProblema = (deletedId: number) => {
+    setItems((prev) => prev.filter((p) => p.id !== deletedId));
+  };
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -398,9 +539,11 @@ export function AdicionarBanco() {
                   {items.map((p) => (
                     <ProblemaCard
                       key={`${p.id}-${p.nome}`}
+                      id={p.id}
                       nome={p.nome}
                       prioridade={p.prioridade}
                       requerInternet={p.requer_internet}
+                      onDelete={handleDeleteProblema}
                     />
                   ))}
                 </div>
@@ -408,23 +551,7 @@ export function AdicionarBanco() {
               {viewMode === "list" && (
                 <div className="space-y-2">
                   {items.map((p) => (
-                    <div
-                      key={`${p.id}-${p.nome}`}
-                      className="rounded-lg border border-border/60 bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Package className="w-4 h-4 text-primary flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-medium text-sm truncate">
-                            {p.nome}
-                          </h4>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {p.prioridade}
-                            {p.requer_internet ? " • Internet" : ""}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <ListProblemaItem key={`${p.id}-${p.nome}`} problema={p} onDelete={handleDeleteProblema} />
                   ))}
                 </div>
               )}

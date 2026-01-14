@@ -156,6 +156,17 @@ def atualizar_problema(problema_id: int, payload: ProblemaUpdate, db: Session = 
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar problema: {e}")
 
+@router.delete("/{problema_id}")
+def deletar_problema(problema_id: int, db: Session = Depends(get_db)):
+    try:
+        from ti.services.problemas import deletar_problema as service_deletar
+        result = service_deletar(db, problema_id)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar problema: {e}")
+
 @router.post("/sincronizar/sla")
 def sincronizar_problemas_com_sla(prioridade: str | None = None, db: Session = Depends(get_db)):
     """

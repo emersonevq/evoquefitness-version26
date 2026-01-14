@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Auth0 Configuration
-AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN", "evoqueacademia.us.auth0.com")
+# ✅ CORRIGIDO: Usar o tenant de PRODUÇÃO por padrão
+AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN", "evoqueacademia-prd.us.auth0.com")  # ← CORRIGIDO
 AUTH0_AUDIENCE = os.getenv("AUTH0_AUDIENCE", "https://erp-api.evoquefitness.com.br")
 AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID", "")
 AUTH0_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET", "")
@@ -20,7 +21,8 @@ if _frontend_url:
 elif _production_domain:
     AUTH0_CALLBACK_URL = f"https://{_production_domain}/auth/callback"
 else:
-    AUTH0_CALLBACK_URL = "http://localhost:3005/auth/callback"
+    # ✅ CORRIGIDO: Usar a porta 3005 (padrão do Vite) como fallback
+    AUTH0_CALLBACK_URL = os.getenv("AUTH0_CALLBACK_URL", "http://localhost:3005/auth/callback")
 
 # Machine-to-Machine (M2M) Credentials for Management API
 AUTH0_M2M_CLIENT_ID = os.getenv("AUTH0_M2M_CLIENT_ID", "")
@@ -40,7 +42,23 @@ print(f"[AUTH0-CONFIG] Callback URL: {AUTH0_CALLBACK_URL}")
 print(f"[AUTH0-CONFIG] Client ID: {AUTH0_CLIENT_ID[:20] + '...' if AUTH0_CLIENT_ID else '❌ NOT SET'}")
 print(f"[AUTH0-CONFIG] Client Secret: {'✓ SET' if AUTH0_CLIENT_SECRET else '❌ NOT SET'}")
 print(f"[AUTH0-CONFIG] M2M Client ID: {'✓ SET' if AUTH0_M2M_CLIENT_ID else '❌ NOT SET'}")
-print(f"[AUTH0-CONFIG] M2M Secret: {'✓ SET' if AUTH0_M2M_CLIENT_SECRET else '❌ NOT SET'}\n")
+print(f"[AUTH0-CONFIG] M2M Secret: {'✓ SET' if AUTH0_M2M_CLIENT_SECRET else '❌ NOT SET'}")
+print(f"[AUTH0-CONFIG] Require Email Verified: {AUTH0_REQUIRE_EMAIL_VERIFIED}")
+print(f"[AUTH0-CONFIG] Token URL: {AUTH0_TOKEN_URL}")
+print(f"[AUTH0-CONFIG] JWKS URL: {AUTH0_JWKS_URL}\n")
+
+# ✅ VALIDAÇÃO ADICIONAL: Verificar se as configurações essenciais estão presentes
+if not AUTH0_CLIENT_ID or not AUTH0_CLIENT_SECRET:
+    print("❌ ERROR: AUTH0_CLIENT_ID and AUTH0_CLIENT_SECRET are required!")
+    print("❌ Please set them in your .env file")
 
 if not AUTH0_M2M_CLIENT_ID or not AUTH0_M2M_CLIENT_SECRET:
     print("⚠️  WARNING: Auth0 M2M credentials not configured. Management API operations will fail.")
+
+# ✅ VALIDAÇÃO: Verificar se está usando o tenant correto
+if AUTH0_DOMAIN == "evoqueacademia.us.auth0.com":
+    print("⚠️  WARNING: Using OLD tenant 'evoqueacademia.us.auth0.com'")
+    print("⚠️  For SSO to work, you should use 'evoqueacademia-prd.us.auth0.com'")
+    print("⚠️  Set AUTH0_DOMAIN=evoqueacademia-prd.us.auth0.com in your .env file\n")
+elif AUTH0_DOMAIN == "evoqueacademia-prd.us.auth0.com":
+    print("✅ Using PRODUCTION tenant - SSO will work correctly\n")
