@@ -192,9 +192,9 @@ export default function AdminLayout() {
         </aside>
 
         {/* Content */}
-        <div className="min-w-0 flex flex-col">
+        <div className="min-w-0 flex flex-col h-full min-h-0">
           {/* Mobile menu */}
-          <div className="mb-6 md:hidden">
+          <div className="mb-4 md:hidden">
             <Sheet>
               <SheetTrigger asChild>
                 <Button
