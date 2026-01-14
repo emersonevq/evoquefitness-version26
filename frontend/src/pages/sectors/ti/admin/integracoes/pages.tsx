@@ -204,6 +204,7 @@ export function ListarUnidades() {
                     key={`${u.id}-${u.nome}`}
                     id={u.id}
                     nome={u.nome}
+                    onDelete={handleDeleteUnidade}
                   />
                 ))}
               </div>
