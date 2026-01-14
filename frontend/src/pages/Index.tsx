@@ -141,8 +141,7 @@ export default function Index() {
 
               {/* Subtitle */}
               <p className="text-base sm:text-lg text-primary-foreground/90 mb-7">
-                Acesse o portal e explore o que há de mais novo no nosso
-                sistema.
+                Acesse o portal e explore as novidades do nosso sistema.
               </p>
 
               {/* CTA Button */}
