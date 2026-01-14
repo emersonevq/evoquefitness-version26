@@ -508,23 +508,7 @@ export function AdicionarBanco() {
               {viewMode === "list" && (
                 <div className="space-y-2">
                   {items.map((p) => (
-                    <div
-                      key={`${p.id}-${p.nome}`}
-                      className="rounded-lg border border-border/60 bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Package className="w-4 h-4 text-primary flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-medium text-sm truncate">
-                            {p.nome}
-                          </h4>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {p.prioridade}
-                            {p.requer_internet ? " • Internet" : ""}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <ListProblemaItem key={`${p.id}-${p.nome}`} problema={p} onDelete={handleDeleteProblema} />
                   ))}
                 </div>
               )}
