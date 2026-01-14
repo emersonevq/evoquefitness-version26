@@ -457,8 +457,16 @@ export default function ChamadosPage() {
       filtered = filtered.filter((t) => selectedUnidades.includes(t.unidade));
     }
 
+    // Apply search input filter (search by unit name)
+    if (searchInputValue.trim()) {
+      const searchLower = searchInputValue.toLowerCase();
+      filtered = filtered.filter((t) =>
+        t.unidade.toLowerCase().includes(searchLower)
+      );
+    }
+
     return filtered;
-  }, [filtro, items, selectedUnidades]);
+  }, [filtro, items, selectedUnidades, searchInputValue]);
 
   // Infinite scroll para tickets
   useEffect(() => {
