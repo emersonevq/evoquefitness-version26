@@ -12,6 +12,7 @@ from .config import (
     AUTH0_AUDIENCE,
     AUTH0_ISSUER,
     AUTH0_JWKS_URL,
+    AUTH0_CLIENT_ID,
 )
 
 security = HTTPBearer()
@@ -107,30 +108,74 @@ def verify_auth0_token(token: str) -> dict:
                 detail="Failed to construct RSA key from JWK"
             )
 
-        # Decode and verify the token
-        print(f"[JWT-VALIDATOR] Verifying token with:")
+        # ✅ CORREÇÃO: Tentar validar com Client ID primeiro (id_token), depois com API audience (access_token)
+        print(f"[JWT-VALIDATOR] Attempting token verification...")
         print(f"[JWT-VALIDATOR]   - algorithms: RS256")
-        print(f"[JWT-VALIDATOR]   - audience: {AUTH0_AUDIENCE}")
         print(f"[JWT-VALIDATOR]   - issuer: {AUTH0_ISSUER}")
+        
+        payload = None
+        validation_error = None
 
-        payload = jwt.decode(
-            token,
-            key,
-            algorithms=["RS256"],
-            audience=AUTH0_AUDIENCE,
-            issuer=AUTH0_ISSUER,
-            options={
-                "verify_signature": True,
-                "verify_aud": True,
-                "verify_iss": True,
-            }
-        )
+        # Primeiro, tenta validar como id_token (audience = Client ID)
+        try:
+            print(f"[JWT-VALIDATOR] Trying validation as id_token (audience = Client ID)...")
+            print(f"[JWT-VALIDATOR]   - audience: {AUTH0_CLIENT_ID}")
+            
+            payload = jwt.decode(
+                token,
+                key,
+                algorithms=["RS256"],
+                audience=AUTH0_CLIENT_ID,
+                issuer=AUTH0_ISSUER,
+                options={
+                    "verify_signature": True,
+                    "verify_aud": True,
+                    "verify_iss": True,
+                }
+            )
+            print(f"[JWT-VALIDATOR] ✓ Token validated as id_token (Client ID audience)")
+        
+        except JWTError as e:
+            # Se falhar, guardar erro e tentar com API audience
+            validation_error = e
+            print(f"[JWT-VALIDATOR] ⚠️  id_token validation failed: {str(e)}")
+            print(f"[JWT-VALIDATOR] Trying validation as access_token (audience = API audience)...")
+            print(f"[JWT-VALIDATOR]   - audience: {AUTH0_AUDIENCE}")
+            
+            try:
+                payload = jwt.decode(
+                    token,
+                    key,
+                    algorithms=["RS256"],
+                    audience=AUTH0_AUDIENCE,
+                    issuer=AUTH0_ISSUER,
+                    options={
+                        "verify_signature": True,
+                        "verify_aud": True,
+                        "verify_iss": True,
+                    }
+                )
+                print(f"[JWT-VALIDATOR] ✓ Token validated as access_token (API audience)")
+            
+            except JWTError as e2:
+                # Se ambos falharem, lançar erro
+                print(f"[JWT-VALIDATOR] ❌ access_token validation also failed: {str(e2)}")
+                print(f"[JWT-VALIDATOR] ❌ Token validation failed with both audiences")
+                raise validation_error  # Lançar o erro original
+
+        if not payload:
+            print(f"[JWT-VALIDATOR] ❌ No payload extracted from token")
+            raise HTTPException(
+                status_code=401,
+                detail="Token verification failed"
+            )
 
         print(f"[JWT-VALIDATOR] ✓ Token verified successfully!")
         print(f"[JWT-VALIDATOR] Payload keys: {list(payload.keys())}")
         print(f"[JWT-VALIDATOR] Email: {payload.get('email', 'NOT FOUND')}")
         print(f"[JWT-VALIDATOR] Email verified: {payload.get('email_verified', 'NOT FOUND')}")
         print(f"[JWT-VALIDATOR] Subject (sub): {payload.get('sub', 'NOT FOUND')}")
+        print(f"[JWT-VALIDATOR] Audience (aud): {payload.get('aud', 'NOT FOUND')}")
 
         return payload
 
