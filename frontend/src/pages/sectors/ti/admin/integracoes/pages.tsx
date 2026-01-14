@@ -496,9 +496,11 @@ export function AdicionarBanco() {
                   {items.map((p) => (
                     <ProblemaCard
                       key={`${p.id}-${p.nome}`}
+                      id={p.id}
                       nome={p.nome}
                       prioridade={p.prioridade}
                       requerInternet={p.requer_internet}
+                      onDelete={handleDeleteProblema}
                     />
                   ))}
                 </div>
