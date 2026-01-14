@@ -781,8 +781,16 @@ export default function ChamadosPage() {
               placeholder="Buscar unidade..."
               value={searchInputValue}
               onChange={(e) => setSearchInputValue(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm"
+              className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-sm"
             />
+            {searchInputValue && (
+              <button
+                onClick={() => setSearchInputValue("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           {/* Unit Dropdown Button */}
