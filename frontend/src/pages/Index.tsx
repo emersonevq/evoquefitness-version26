@@ -231,12 +231,25 @@ export default function Index() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {sectors.map((s, idx) => {
               const allowed = canAccess(s.slug);
-              const href = user
-                ? `/setor/${s.slug}`
-                : `/auth0/login?redirect=/setor/${s.slug}`;
+              const isFinanceiro = s.slug === "financeiro";
+
+              const handleClick = (e: React.MouseEvent) => {
+                if (isFinanceiro) {
+                  e.preventDefault();
+                  window.open("https://portalfinanceiro.cloud/", "_blank");
+                }
+              };
+
+              const href = isFinanceiro
+                ? "#"
+                : user
+                  ? `/setor/${s.slug}`
+                  : `/auth0/login?redirect=/setor/${s.slug}`;
+
               return (
                 <Link
                   to={href}
+                  onClick={handleClick}
                   key={s.slug}
                   className={`group relative ${
                     user && !allowed
