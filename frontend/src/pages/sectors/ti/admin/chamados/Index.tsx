@@ -240,7 +240,6 @@ export default function ChamadosPage() {
 
   // Unit filter state
   const [selectedUnidades, setSelectedUnidades] = useState<string[]>([]);
-  const [expandedFilter, setExpandedFilter] = useState(false);
   const [searchUnidade, setSearchUnidade] = useState("");
 
   useEffect(() => {
