@@ -141,16 +141,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className="flex items-center gap-1.5 font-bold tracking-tight"
           >
             {!location.pathname.startsWith("/setor/bi") ? (
-              <>
-                <img
-                  src="https://images.totalpass.com/public/1280x720/czM6Ly90cC1pbWFnZS1hZG1pbi1wcm9kL2d5bXMva2g2OHF6OWNuajloN2lkdnhzcHhhdWx4emFhbWEzYnc3MGx5cDRzZ3p5aTlpZGM0OHRvYnk0YW56azRk"
-                  alt="Evoque Fitness Logo"
-                  className="h-5 w-auto rounded-sm shadow-sm"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <span className="text-sm hidden sm:inline">Portal Evoque</span>
-              </>
+              <img
+                src="https://images.totalpass.com/public/1280x720/czM6Ly90cC1pbWFnZS1hZG1pbi1wcm9kL2d5bXMva2g2OHF6OWNuajloN2lkdnhzcHhhdWx4emFhbWEzYnc3MGx5cDRzZ3p5aTlpZGM0OHRvYnk0YW56azRk"
+                alt="Evoque Fitness Logo"
+                className="h-5 w-auto rounded-sm shadow-sm"
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               // On BI page, keep header minimal and rely on sidebar logo
               <span className="sr-only">Portal Evoque</span>
@@ -161,7 +158,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `px-2 py-1 rounded-full text-xs font-medium ${
+                `inline-flex items-center justify-center px-3 py-1.5 rounded-full text-sm font-medium h-10 ${
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -175,9 +172,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="secondary"
-                    className="rounded-full px-2 py-1 h-auto text-xs"
+                    className="rounded-full px-3 py-1.5 text-sm h-10"
                   >
-                    Portais <ChevronDown className="size-3 ml-1" />
+                    Portais <ChevronDown className="size-4 ml-1" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -208,11 +205,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="secondary"
-                    className="ml-1 hidden md:flex items-center gap-1 rounded-full px-2 py-1 text-xs"
+                    className="ml-1 hidden md:flex items-center gap-1 rounded-full px-3 py-1.5 text-sm h-10"
                   >
                     <div className="h-5 w-5 rounded-full bg-primary/90" />
                     <span className="hidden lg:inline">{user?.name}</span>
-                    <ChevronDown className="size-3" />
+                    <ChevronDown className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -230,7 +227,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Link to="/auth0/login">
                 <Button
                   variant="secondary"
-                  className="ml-2 hidden md:flex items-center gap-2 rounded-full px-3 py-1.5 text-sm"
+                  className="ml-2 hidden md:flex items-center gap-2 rounded-full px-3 py-1.5 text-sm h-10"
                 >
                   Fazer login
                 </Button>
