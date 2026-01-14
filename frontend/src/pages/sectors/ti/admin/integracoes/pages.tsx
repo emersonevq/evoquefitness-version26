@@ -377,6 +377,10 @@ export function AdicionarBanco() {
     load();
   }, []);
 
+  const handleDeleteProblema = (deletedId: number) => {
+    setItems((prev) => prev.filter((p) => p.id !== deletedId));
+  };
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!nome) return;
