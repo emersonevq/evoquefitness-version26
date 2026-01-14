@@ -175,9 +175,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="secondary"
-                    className="rounded-full px-2 py-1 h-auto text-xs"
+                    className="rounded-full px-3 py-1.5 text-sm h-10"
                   >
-                    Portais <ChevronDown className="size-3 ml-1" />
+                    Portais <ChevronDown className="size-4 ml-1" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
