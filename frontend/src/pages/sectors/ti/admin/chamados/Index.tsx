@@ -394,9 +394,20 @@ export default function ChamadosPage() {
   }, []);
 
   const counts = useMemo(() => {
-    const baseItems = selectedUnidades.length > 0
-      ? items.filter((t) => selectedUnidades.includes(t.unidade))
-      : items;
+    let baseItems = items;
+
+    // Apply unit selection filter
+    if (selectedUnidades.length > 0) {
+      baseItems = baseItems.filter((t) => selectedUnidades.includes(t.unidade));
+    }
+
+    // Apply search input filter
+    if (searchInputValue.trim()) {
+      const searchLower = searchInputValue.toLowerCase();
+      baseItems = baseItems.filter((t) =>
+        t.unidade.toLowerCase().includes(searchLower)
+      );
+    }
 
     return {
       todos: baseItems.length,
@@ -405,7 +416,7 @@ export default function ChamadosPage() {
       concluidos: baseItems.filter((t) => t.status === "CONCLUIDO").length,
       cancelados: baseItems.filter((t) => t.status === "CANCELADO").length,
     };
-  }, [items, selectedUnidades]);
+  }, [items, selectedUnidades, searchInputValue]);
 
   const unidades = useMemo(() => {
     const uniqueUnidades = Array.from(new Set(items.map((t) => t.unidade)))
