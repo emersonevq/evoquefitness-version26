@@ -84,6 +84,46 @@ export function AdicionarUnidade() {
   );
 }
 
+function ListUnidadeItem({ unidade, onDelete }: { unidade: { id: number; nome: string }; onDelete: (id: number) => void }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Tem certeza que deseja deletar a unidade "${unidade.nome}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/unidades/${unidade.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erro ao deletar unidade");
+      onDelete(unidade.id);
+    } catch (e) {
+      alert("Não foi possível deletar a unidade");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <Package className="w-4 h-4 text-primary flex-shrink-0" />
+        <h4 className="font-medium text-sm truncate">{unidade.nome}</h4>
+      </div>
+      <div className="flex items-center gap-3 whitespace-nowrap ml-2">
+        <div className="text-xs text-muted-foreground">
+          ID: {unidade.id}
+        </div>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="p-1 hover:bg-destructive/10 rounded transition-colors disabled:opacity-50"
+          title="Deletar unidade"
+        >
+          <Trash2 className="w-4 h-4 text-destructive" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function UnidadeCard({ nome, id, onDelete }: { nome: string; id: number; onDelete: (id: number) => void }) {
   const [deleting, setDeleting] = useState(false);
 
