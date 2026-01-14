@@ -13,6 +13,7 @@ export default defineConfig({
   },
   server: {
     port: 3005,
+    allowedHosts: ["app.portalevoque.com"],
     proxy: {
       "/api": {
         target,
