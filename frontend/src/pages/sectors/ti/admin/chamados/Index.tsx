@@ -405,7 +405,7 @@ export default function ChamadosPage() {
     if (searchInputValue.trim()) {
       const searchLower = searchInputValue.toLowerCase();
       baseItems = baseItems.filter((t) =>
-        t.unidade.toLowerCase().includes(searchLower),
+        t.unidade.toLowerCase().includes(searchLower)
       );
     }
 
@@ -472,7 +472,7 @@ export default function ChamadosPage() {
     if (searchInputValue.trim()) {
       const searchLower = searchInputValue.toLowerCase();
       filtered = filtered.filter((t) =>
-        t.unidade.toLowerCase().includes(searchLower),
+        t.unidade.toLowerCase().includes(searchLower)
       );
     }
 
@@ -700,7 +700,7 @@ export default function ChamadosPage() {
   }
 
   return (
-    <div className="space-y-4 flex flex-col h-full">
+    <div className="space-y-4 flex flex-col h-full max-h-[calc(100vh-200px)] overflow-hidden">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 flex-shrink-0">
         <SummaryCard
