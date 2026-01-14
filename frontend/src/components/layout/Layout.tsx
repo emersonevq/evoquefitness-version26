@@ -208,11 +208,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="secondary"
-                    className="ml-1 hidden md:flex items-center gap-1 rounded-full px-2 py-1 text-xs"
+                    className="ml-1 hidden md:flex items-center gap-1 rounded-full px-3 py-1.5 text-sm h-10"
                   >
                     <div className="h-5 w-5 rounded-full bg-primary/90" />
                     <span className="hidden lg:inline">{user?.name}</span>
-                    <ChevronDown className="size-3" />
+                    <ChevronDown className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
