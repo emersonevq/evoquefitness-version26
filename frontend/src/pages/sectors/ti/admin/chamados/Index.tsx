@@ -23,6 +23,8 @@ import {
   Image as ImageIcon,
   Grid3x3,
   List,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import { ticketsMock } from "../mock";
 import { apiFetch, API_BASE } from "@/lib/api";
