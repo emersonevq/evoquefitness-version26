@@ -264,14 +264,19 @@ export function ListarUnidades() {
 }
 
 function ProblemaCard({
+  id,
   nome,
   prioridade,
   requerInternet,
+  onDelete,
 }: {
+  id: number;
   nome: string;
   prioridade: string;
   requerInternet: boolean;
+  onDelete: (id: number) => void;
 }) {
+  const [deleting, setDeleting] = useState(false);
   const priorityColor = {
     Normal: "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
     Alta: "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
@@ -280,17 +285,41 @@ function ProblemaCard({
       "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300",
   } as Record<string, string>;
 
+  const handleDelete = async () => {
+    if (!confirm(`Tem certeza que deseja deletar o problema "${nome}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/problemas/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erro ao deletar problema");
+      onDelete(id);
+    } catch (e) {
+      alert("Não foi possível deletar o problema");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-border/60 bg-card overflow-hidden hover:shadow-md hover:border-primary/20 transition-all">
       <div className="px-4 py-3 border-b border-border/60 bg-muted/30 flex items-center gap-2 justify-between">
         <div className="font-semibold text-sm text-primary truncate">
           {nome}
         </div>
-        <span
-          className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 whitespace-nowrap ${priorityColor[prioridade] || priorityColor.Normal}`}
-        >
-          {prioridade}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 whitespace-nowrap ${priorityColor[prioridade] || priorityColor.Normal}`}
+          >
+            {prioridade}
+          </span>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="p-1 hover:bg-destructive/10 rounded transition-colors disabled:opacity-50"
+            title="Deletar problema"
+          >
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </button>
+        </div>
       </div>
       <div className="p-4">
         {requerInternet && (
