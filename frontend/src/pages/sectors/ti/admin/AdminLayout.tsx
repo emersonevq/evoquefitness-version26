@@ -127,10 +127,10 @@ export default function AdminLayout() {
         </div>
       </section>
 
-      <section className="container py-6 grid grid-cols-1 md:grid-cols-[300px,1fr] gap-8 flex-1 min-h-0 overflow-hidden">
+      <section className="container py-6 grid grid-cols-1 md:grid-cols-[300px,1fr] gap-8 flex-1 min-h-0">
         {/* Sidebar Desktop */}
-        <aside className="hidden md:block overflow-y-auto max-h-[calc(100vh-200px)]">
-          <nav className="sticky top-0 space-y-4">
+        <aside className="hidden md:block overflow-y-auto max-h-[calc(100vh-180px)]">
+          <nav className="space-y-4">
             {groups.map((group) => (
               <div
                 key={group.title}
