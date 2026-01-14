@@ -54,7 +54,7 @@ export default function Login() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight">
-                    Bem vindo
+                    Bem vindo (a)
                   </h1>
                   <p className="text-sm text-primary font-medium">
                     Faça login
