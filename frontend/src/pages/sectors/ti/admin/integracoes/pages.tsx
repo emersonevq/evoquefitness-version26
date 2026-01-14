@@ -135,13 +135,22 @@ export function ListarUnidades() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
     apiFetch("/unidades")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
       .then((data: Unidade[]) => Array.isArray(data) && setItems(data))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
+
+  const handleDeleteUnidade = (deletedId: number) => {
+    setItems((prev) => prev.filter((u) => u.id !== deletedId));
+  };
 
   return (
     <Card className="p-4">
