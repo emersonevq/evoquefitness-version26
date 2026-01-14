@@ -238,6 +238,11 @@ export default function ChamadosPage() {
   const ticketsContainerRef = useRef<HTMLDivElement>(null);
   const loadMoreTicketsRef = useRef<HTMLDivElement>(null);
 
+  // Unit filter state
+  const [selectedUnidades, setSelectedUnidades] = useState<string[]>([]);
+  const [expandedFilter, setExpandedFilter] = useState(false);
+  const [searchUnidade, setSearchUnidade] = useState("");
+
   useEffect(() => {
     apiFetch("/usuarios")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
