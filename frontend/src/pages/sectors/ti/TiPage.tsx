@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { FileUploadArea } from "@/components/file-upload/FileUploadArea";
 
 const sector = sectors.find((s) => s.slug === "ti")!;
 
