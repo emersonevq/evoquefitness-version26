@@ -588,12 +588,19 @@ function TicketForm(props: {
         />
       </div>
       <div className="grid gap-2">
-        <Label>Arquivos (opcional)</Label>
+        <Label htmlFor="files">Arquivos (opcional)</Label>
         <input
+          id="files"
           type="file"
           multiple
           onChange={(e) => setFiles(Array.from(e.target.files || []))}
+          className="rounded-md border border-input bg-background p-2 text-sm"
         />
+        {files.length > 0 && (
+          <div className="text-sm text-muted-foreground">
+            {files.length} arquivo(s) selecionado(s)
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-end gap-3 pt-2">
         <Button type="submit">Salvar</Button>
