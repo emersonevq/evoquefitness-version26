@@ -265,90 +265,110 @@ export default function TiPage() {
       </section>
 
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
-        <DialogContent className="max-w-md overflow-hidden p-0">
+        <DialogContent className="max-w-md overflow-hidden p-0 border-0 shadow-2xl">
           {lastCreated && (
             <div className="w-full">
-              <div className="brand-gradient px-5 py-4 flex items-center gap-3">
-                <div className="rounded-full bg-white/15 p-2">
-                  <CheckCircle className="size-6 text-primary-foreground" />
+              {/* Header com gradiente */}
+              <div className="brand-gradient relative overflow-hidden px-6 py-8 text-center">
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl" />
                 </div>
-                <div>
-                  <div className="text-sm/5 text-primary-foreground/90">
-                    Chamado aberto
+                <div className="relative space-y-3">
+                  <div className="flex justify-center">
+                    <div className="rounded-full bg-white/20 backdrop-blur-sm p-3">
+                      <CheckCircle className="w-10 h-10 text-white" />
+                    </div>
                   </div>
-                  <div className="text-xl font-extrabold text-primary-foreground drop-shadow">
-                    Sucesso!
+                  <div>
+                    <p className="text-white/80 text-sm font-medium">Sucesso!</p>
+                    <h2 className="text-white text-2xl font-extrabold mt-1">Chamado Aberto</h2>
                   </div>
                 </div>
               </div>
 
-              <div className="p-5 space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  Guarde as informações abaixo:
-                </div>
+              {/* Conteúdo */}
+              <div className="p-6 space-y-6">
+                <p className="text-sm text-muted-foreground text-center">
+                  Suas informações foram registradas com sucesso. Guarde estes dados para futuras referências.
+                </p>
 
-                <div className="grid gap-3">
-                  <div className="text-xs text-muted-foreground">Código</div>
-                  <div className="flex items-center justify-between rounded-md border border-border/60 bg-background px-3 py-2">
-                    <div className="font-mono font-semibold text-base break-all">
-                      {lastCreated.codigo}
+                {/* Código */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Código do Chamado
+                  </label>
+                  <div className="relative group">
+                    <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-4">
+                      <div className="font-mono font-bold text-lg text-primary">
+                        {lastCreated.codigo}
+                      </div>
                     </div>
                     <Button
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
-                      className="ml-2"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={async () => {
                         try {
-                          await navigator.clipboard.writeText(
-                            lastCreated.codigo,
-                          );
+                          await navigator.clipboard.writeText(lastCreated.codigo);
                         } catch {}
                       }}
                     >
-                      <Copy className="size-4 mr-1" /> Copiar
+                      <Copy className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid gap-3">
-                  <div className="text-xs text-muted-foreground">Protocolo</div>
-                  <div className="flex items-center justify-between rounded-md border border-border/60 bg-background px-3 py-2">
-                    <div className="font-mono font-semibold text-base break-all">
-                      {lastCreated.protocolo}
+                {/* Protocolo */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Número de Protocolo
+                  </label>
+                  <div className="relative group">
+                    <div className="bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/20 rounded-lg p-4">
+                      <div className="font-mono font-bold text-lg text-accent">
+                        {lastCreated.protocolo}
+                      </div>
                     </div>
                     <Button
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
-                      className="ml-2"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={async () => {
                         try {
-                          await navigator.clipboard.writeText(
-                            lastCreated.protocolo,
-                          );
+                          await navigator.clipboard.writeText(lastCreated.protocolo);
                         } catch {}
                       }}
                     >
-                      <Copy className="size-4 mr-1" /> Copiar
+                      <Copy className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="my-2" />
 
-                <div className="flex flex-wrap gap-2 justify-end">
+                {/* Ações */}
+                <div className="flex gap-2">
                   <Button
-                    variant="secondary"
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(
-                          `Código: ${lastCreated.codigo} | Protocolo: ${lastCreated.protocolo}`,
+                          `Código: ${lastCreated.codigo}\nProtocolo: ${lastCreated.protocolo}`,
                         );
                       } catch {}
                     }}
                   >
-                    <Copy className="size-4 mr-1" /> Copiar tudo
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar Tudo
                   </Button>
-                  <Button onClick={() => setSuccessOpen(false)}>Fechar</Button>
+                  <Button
+                    className="flex-1"
+                    onClick={() => setSuccessOpen(false)}
+                  >
+                    Concluído
+                  </Button>
                 </div>
               </div>
             </div>
