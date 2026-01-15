@@ -404,7 +404,7 @@ function TicketForm(props: {
       form.descricao.trim(),
     ];
     if (must.some((v) => !v)) {
-      alert("Preencha todos os campos obrigatórios.");
+      alert("Preencha todos os campos obrigatórios. Os arquivos são opcionais.");
       return;
     }
     if (selectedProblem?.requer_internet && !form.internetItem.trim()) {
