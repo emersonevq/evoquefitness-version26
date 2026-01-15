@@ -394,19 +394,27 @@ function TicketForm(props: {
   const [files, setFiles] = useState<File[]>([]);
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const must = [
-      form.nome.trim(),
-      form.cargo.trim(),
-      form.email.trim(),
-      form.telefone.trim(),
-      form.unidade.trim(),
-      form.problema.trim(),
-      form.descricao.trim(),
-    ];
-    if (must.some((v) => !v)) {
-      alert("Preencha todos os campos obrigatórios. Os arquivos são opcionais.");
+
+    // Validate required fields
+    const fieldLabels: Record<string, string> = {
+      nome: "Nome do solicitante",
+      cargo: "Cargo",
+      email: "E-mail",
+      telefone: "Telefone",
+      unidade: "Unidade",
+      problema: "Problema Reportado",
+      descricao: "Descrição do problema",
+    };
+
+    const requiredFields = ["nome", "cargo", "email", "telefone", "unidade", "problema", "descricao"] as const;
+    const missingFields = requiredFields.filter((field) => !form[field].trim());
+
+    if (missingFields.length > 0) {
+      const missingLabels = missingFields.map((field) => fieldLabels[field]).join(", ");
+      alert(`Campos obrigatórios não preenchidos: ${missingLabels}\n\nOs arquivos são opcionais.`);
       return;
     }
+
     if (selectedProblem?.requer_internet && !form.internetItem.trim()) {
       alert("Selecione o item de Internet.");
       return;
