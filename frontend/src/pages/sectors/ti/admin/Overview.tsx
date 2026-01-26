@@ -156,6 +156,7 @@ export default function Overview() {
     queryKey: ["metrics-basic"],
     queryFn: async () => {
       const response = await api.get("/metrics/dashboard/basic");
+      console.log("[Metrics] basicMetricsData:", response.data);
       return response.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
