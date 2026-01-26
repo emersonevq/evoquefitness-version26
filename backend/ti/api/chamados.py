@@ -695,6 +695,7 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                             usuario_id=n.usuario_id,
                             usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
                             usuario_email=usuario.email if usuario else None,
+                            action_type="alterado_por",
                         ))
         except Exception:
             pass
