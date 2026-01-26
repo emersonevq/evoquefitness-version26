@@ -300,6 +300,8 @@ export default function Overview() {
       return response.data;
     },
     onSuccess: (data: any) => {
+      // Invalida todas as queries de SLA e métricas
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-sla"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
