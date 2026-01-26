@@ -16,6 +16,7 @@ class HistoricoItem(BaseModel):
     usuario_id: int | None = None
     usuario_nome: str | None = None
     usuario_email: str | None = None
+    action_type: str | None = None  # "aberto_por", "alterado_por", "ticket", etc.
 
 class HistoricoResponse(BaseModel):
     items: list[HistoricoItem]

@@ -1,8 +1,10 @@
 from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Body
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from core.db import get_db, engine
+from auth0.validator import get_current_user
 from ti.schemas.chamado import (
     ChamadoCreate,
     ChamadoOut,
@@ -28,6 +30,20 @@ from core.email_msgraph import send_async, send_chamado_abertura, send_chamado_s
 from fastapi.responses import Response
 
 router = APIRouter(prefix="/chamados", tags=["TI - Chamados"])
+
+security = HTTPBearer(auto_error=False)
+
+
+async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict | None:
+    """
+    Tenta extrair o usuário autenticado, mas não falha se não houver token
+    """
+    if not credentials:
+        return None
+    try:
+        return get_current_user(credentials)
+    except Exception:
+        return None
 
 
 def _sincronizar_sla(db: Session, chamado: Chamado, status_anterior: str | None = None) -> None:
@@ -169,13 +185,21 @@ def listar_chamados(db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=ChamadoOut)
-def criar_chamado(payload: ChamadoCreate, db: Session = Depends(get_db)):
+def criar_chamado(payload: ChamadoCreate, db: Session = Depends(get_db), user: dict = None):
     try:
         try:
             Chamado.__table__.create(bind=engine, checkfirst=True)
         except Exception:
             pass
-        ch = service_criar(db, payload)
+        # Buscar user_id pelo email do token Auth0 (se autenticado)
+        user_id = None
+        if user:
+            user_email = user.get("email")
+            if user_email:
+                db_user = db.query(User).filter(User.email == user_email).first()
+                if db_user:
+                    user_id = db_user.id
+        ch = service_criar(db, payload, user_id=user_id)
 
         # Sincroniza o chamado com a tabela de SLA
         _sincronizar_sla(db, ch)
@@ -343,19 +367,20 @@ def criar_chamado_com_anexos(
             visita=visita,
             descricao=descricao,
         )
-        ch = service_criar(db, payload)
+        # Tentar usar autor_email para encontrar o user_id
+        user_id = None
+        if autor_email:
+            try:
+                user = db.query(User).filter(User.email == autor_email).first()
+                user_id = user.id if user else None
+            except Exception:
+                pass
+        ch = service_criar(db, payload, user_id=user_id)
 
         # Sincroniza o chamado com a tabela de SLA
         _sincronizar_sla(db, ch)
 
         if files:
-            user_id = None
-            if autor_email:
-                try:
-                    user = db.query(User).filter(User.email == autor_email).first()
-                    user_id = user.id if user else None
-                except Exception:
-                    user_id = None
             import hashlib
             saved = 0
             for f in files:
@@ -618,23 +643,40 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                     self.id, self.nome_original, self.caminho_arquivo, self.mime_type, self.tamanho_bytes, self.data_upload = r
             anexos_abertura = [AnexoOut.model_validate(_CA(r)) for r in rows]
         # Item 1: Aberto em
+        usuario_abertura = None
+        usuario_nome_abertura = None
+        usuario_email_abertura = None
+        if ch.usuario_id:
+            usuario_abertura = db.query(User).filter(User.id == ch.usuario_id).first()
+            if usuario_abertura:
+                usuario_nome_abertura = f"{usuario_abertura.nome} {usuario_abertura.sobrenome}"
+                usuario_email_abertura = usuario_abertura.email
+        else:
+            # Fallback: usar solicitante e email do chamado se não houver usuario_id
+            usuario_nome_abertura = ch.solicitante
+            usuario_email_abertura = ch.email
+
         items.append(HistoricoItem(
             t=first_dt,
             tipo="abertura",
             label="Aberto em",
             anexos=anexos_abertura,
-            usuario_nome="Sistema",
-            usuario_email=None,
+            usuario_id=ch.usuario_id,
+            usuario_nome=usuario_nome_abertura,
+            usuario_email=usuario_email_abertura,
+            action_type="aberto_por",
         ))
-        # Item 2: Descrição (se houver)
+        # Item 2: Descrição (se houver) - mesmo usuário que abriu
         if ch.descricao:
             items.append(HistoricoItem(
                 t=first_dt,
-                tipo="abertura",
-                label=f"Descrição: \n{ch.descricao}",
+                tipo="descricao",
+                label=f"{ch.descricao}",
                 anexos=None,
-                usuario_nome="Sistema",
-                usuario_email=None,
+                usuario_id=ch.usuario_id,
+                usuario_nome=usuario_nome_abertura,
+                usuario_email=usuario_email_abertura,
+                action_type="aberto_por",
             ))
         try:
             Notification.__table__.create(bind=engine, checkfirst=True)
@@ -653,6 +695,7 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                     usuario_id=r.usuario_id,
                     usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
                     usuario_email=usuario.email if usuario else None,
+                    action_type="alterado_por",
                 ))
             # Fallback somente se não houver historico_status
             if not hs_rows:
@@ -673,6 +716,7 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                             usuario_id=n.usuario_id,
                             usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
                             usuario_email=usuario.email if usuario else None,
+                            action_type="alterado_por",
                         ))
         except Exception:
             pass
@@ -708,6 +752,7 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                 usuario_id=h.usuario_id,
                 usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
                 usuario_email=usuario.email if usuario else None,
+                action_type="ticket",
             ))
         items_sorted = sorted(items, key=lambda x: x.t)
         return HistoricoResponse(items=items_sorted)
@@ -723,7 +768,7 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{chamado_id}/status", response_model=ChamadoOut)
-def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session = Depends(get_db)):
+def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session = Depends(get_db), user: dict | None = Depends(get_optional_user)):
     try:
         novo = _normalize_status(payload.status)
         if novo not in ALLOWED_STATUSES:
@@ -733,6 +778,16 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
         ).first()
         if not ch:
             raise HTTPException(status_code=404, detail="Chamado não encontrado")
+
+        # Buscar user_id do usuário autenticado
+        user_email = user.get("email") if user else None
+        db_user = None
+        user_id = None
+        if user_email:
+            db_user = db.query(User).filter(User.email == user_email).first()
+            if db_user:
+                user_id = db_user.id
+
         prev = ch.status or "Aberto"
         ch.status = novo
         if prev == "Aberto" and novo != "Aberto" and ch.data_primeira_resposta is None:
@@ -783,6 +838,8 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
                 "protocolo": ch.protocolo,
                 "status": ch.status,
                 "status_anterior": prev,
+                "usuario_id": user_id,
+                "usuario_nome": f"{db_user.nome} {db_user.sobrenome}" if db_user else None,
             }, ensure_ascii=False)
             n = Notification(
                 tipo="chamado",
@@ -792,20 +849,22 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
                 recurso_id=ch.id,
                 acao="status",
                 dados=dados,
+                usuario_id=user_id,
             )
             db.add(n)
             # registrar em historico_status (única fonte de verdade)
             try:
                 hs = HistoricoStatus(
                     chamado_id=ch.id,
-                    usuario_id=None,
+                    usuario_id=user_id,
                     status=ch.status,
+                    status_anterior=prev,
+                    status_novo=ch.status,
                     data_inicio=agora,
-                    descricao=f"Migrado: {prev} → {ch.status}",
-                    created_at=agora,
-                    updated_at=agora,
+                    descricao=f"{prev} → {ch.status}",
+                    criado_em=agora,
                 )
-                print(f"[HISTORICO STATUS] Criando novo: chamado_id={ch.id}, status={ch.status}, data_inicio={agora}")
+                print(f"[HISTORICO STATUS] Criando novo: chamado_id={ch.id}, status={ch.status}, usuario_id={user_id}, data_inicio={agora}")
                 db.add(hs)
                 db.commit()
                 print(f"[HISTORICO STATUS] Sucesso ao salvar registro")
@@ -862,7 +921,7 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
 
 
 @router.post("/{chamado_id}/assign", response_model=ChamadoOut)
-def atribuir_chamado(chamado_id: int, payload: dict = Body(...), db: Session = Depends(get_db)):
+def atribuir_chamado(chamado_id: int, payload: dict = Body(...), db: Session = Depends(get_db), user: dict | None = Depends(get_optional_user)):
     try:
         agent_id = payload.get("agent_id")
         if not agent_id:
@@ -880,6 +939,15 @@ def atribuir_chamado(chamado_id: int, payload: dict = Body(...), db: Session = D
         if not ch:
             raise HTTPException(status_code=404, detail="Chamado não encontrado")
 
+        # Buscar quem está fazendo a atribuição
+        user_email = user.get("email") if user else None
+        atribuidor = None
+        atribuidor_id = None
+        if user_email:
+            atribuidor = db.query(User).filter(User.email == user_email).first()
+            if atribuidor:
+                atribuidor_id = atribuidor.id
+
         # Atualizar a atribuição
         ch.status_assumido_por_id = agent_id
         ch.status_assumido_em = now_brazil_naive()
@@ -894,19 +962,40 @@ def atribuir_chamado(chamado_id: int, payload: dict = Body(...), db: Session = D
                 "id": ch.id,
                 "codigo": ch.codigo,
                 "agente_id": agent_id,
-                "agente_nome": agent.nome,
+                "agente_nome": f"{agent.nome} {agent.sobrenome}",
+                "atribuido_por_id": atribuidor_id,
+                "atribuido_por_nome": f"{atribuidor.nome} {atribuidor.sobrenome}" if atribuidor else None,
             }, ensure_ascii=False)
 
             n = Notification(
                 tipo="chamado",
                 titulo=f"Chamado atribuído: {ch.codigo}",
-                mensagem=f"Chamado {ch.protocolo} foi atribuído para {agent.nome}",
+                mensagem=f"Atribuído para {agent.nome} {agent.sobrenome}",
                 recurso="chamado",
                 recurso_id=chamado_id,
                 acao="atribuido",
                 dados=dados,
+                usuario_id=atribuidor_id,
             )
             db.add(n)
+
+            # Registrar no histórico de status
+            try:
+                HistoricoStatus.__table__.create(bind=engine, checkfirst=True)
+                hs = HistoricoStatus(
+                    chamado_id=ch.id,
+                    usuario_id=atribuidor_id,
+                    status=ch.status,
+                    status_anterior=ch.status,
+                    status_novo=ch.status,
+                    data_inicio=now_brazil_naive(),
+                    descricao=f"Atribuído para {agent.nome} {agent.sobrenome}",
+                    criado_em=now_brazil_naive(),
+                )
+                db.add(hs)
+            except Exception as e:
+                print(f"[ASSIGN HISTORICO ERROR] {e}")
+
             db.commit()
             db.refresh(n)
         except Exception as e:

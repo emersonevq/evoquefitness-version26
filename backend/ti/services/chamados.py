@@ -55,7 +55,7 @@ def _next_protocolo(db: Session) -> str:
     return fallback
 
 
-def criar_chamado(db: Session, payload: ChamadoCreate) -> Chamado:
+def criar_chamado(db: Session, payload: ChamadoCreate, user_id: int | None = None) -> Chamado:
     try:
         Chamado.__table__.create(bind=engine, checkfirst=True)
     except Exception:
@@ -88,6 +88,7 @@ def criar_chamado(db: Session, payload: ChamadoCreate) -> Chamado:
         data_abertura=now_brazil_naive(),
         status="Aberto",
         prioridade="Normal",
+        usuario_id=user_id,
     )
     db.add(novo)
     db.commit()
