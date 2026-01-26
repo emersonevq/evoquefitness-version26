@@ -50,7 +50,7 @@ export function useSLACacheManager() {
         await api.post(`/sla/cache/invalidate-chamado/${chamadoId}`);
 
         // Invalida queries do React Query relacionadas
-        queryClient.invalidateQueries({ queryKey: ["sla-status-realtime"] });
+        queryClient.invalidateQueries({ queryKey: ["sla-status", chamadoId] });
         queryClient.invalidateQueries({ queryKey: ["metrics-dashboard"] });
 
         console.log(`[CACHE] Cache do chamado #${chamadoId} invalidado`);
