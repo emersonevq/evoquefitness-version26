@@ -120,18 +120,8 @@ export function SLAStatusBadge({
 interface SLAStatusOverviewProps {
   chamadoId: number;
   prioridade: string;
-  statusResposta:
-    | "ok"
-    | "vencido"
-    | "em_andamento"
-    | "congelado"
-    | "sem_configuracao";
-  statusResolucao:
-    | "ok"
-    | "vencido"
-    | "em_andamento"
-    | "congelado"
-    | "sem_configuracao";
+  statusResposta: SLAStatusType;
+  statusResolucao: SLAStatusType;
   tempoRepostagem: number;
   tempoResolucao: number;
   limiteResposta: number;
