@@ -363,6 +363,7 @@ export default function Overview() {
           "[Overview] Recebido evento metrics:updated, invalidando cache",
         );
         // Invalida todas as queries de métricas para forçar refetch imediato
+        queryClient.invalidateQueries({ queryKey: ["sla-status"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-weekly"] });
