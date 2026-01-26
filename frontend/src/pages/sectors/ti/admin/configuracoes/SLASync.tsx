@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, RefreshCw, Loader } from "lucide-react";
+import { AlertCircle, CheckCircle2, RefreshCw, Loader, Wrench } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -17,9 +17,20 @@ interface SyncStats {
   erros?: number;
 }
 
+interface PopulateStats {
+  ok?: boolean;
+  message?: string;
+  total_atualizados?: number;
+  total_pulados?: number;
+  erros?: number;
+  cache_invalidado?: boolean;
+}
+
 export function SLASync() {
   const [loading, setLoading] = useState(false);
+  const [populatingFirstResponse, setPopulatingFirstResponse] = useState(false);
   const [stats, setStats] = useState<SyncStats | null>(null);
+  const [populateStats, setPopulateStats] = useState<PopulateStats | null>(null);
 
   const handleSyncAll = async () => {
     setLoading(true);
