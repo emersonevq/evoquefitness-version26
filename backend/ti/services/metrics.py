@@ -618,7 +618,7 @@ class MetricsCalculator:
 
     @staticmethod
     def _calculate_sla_distribution(db: Session) -> dict:
-        """Cálculo real - usa MESMOS critérios que get_sla_compliance_mes - OTIMIZADO"""
+        """Cálculo real - INCLUI TODOS os chamados do mês (com ou sem resposta)"""
         try:
             from ti.services.sla import SLACalculator
             from ti.models.historico_status import HistoricoStatus
@@ -626,13 +626,13 @@ class MetricsCalculator:
             agora = now_brazil_naive()
             mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-            # IMPORTANTE: Usa MESMOS chamados que o card SLA (todos do mês)
+            # ⚠️ REMOVIDO: data_primeira_resposta.isnot(None)
+            # Agora inclui TODOS os chamados do mês para contar corretamente
             chamados_mes = db.query(Chamado).filter(
                 and_(
                     Chamado.data_abertura >= mes_inicio,
                     Chamado.data_abertura <= agora,
-                    Chamado.status != "Cancelado",
-                    Chamado.data_primeira_resposta.isnot(None)
+                    Chamado.status != "Cancelado"
                 )
             ).all()
 
