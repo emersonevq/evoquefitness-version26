@@ -626,13 +626,24 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                     self.id, self.nome_original, self.caminho_arquivo, self.mime_type, self.tamanho_bytes, self.data_upload = r
             anexos_abertura = [AnexoOut.model_validate(_CA(r)) for r in rows]
         # Item 1: Aberto em
+        usuario_abertura = None
+        usuario_nome_abertura = None
+        usuario_email_abertura = None
+        if ch.usuario_id:
+            usuario_abertura = db.query(User).filter(User.id == ch.usuario_id).first()
+            if usuario_abertura:
+                usuario_nome_abertura = f"{usuario_abertura.nome} {usuario_abertura.sobrenome}"
+                usuario_email_abertura = usuario_abertura.email
+
         items.append(HistoricoItem(
             t=first_dt,
             tipo="abertura",
             label="Aberto em",
             anexos=anexos_abertura,
-            usuario_nome="Sistema",
-            usuario_email=None,
+            usuario_id=ch.usuario_id,
+            usuario_nome=usuario_nome_abertura,
+            usuario_email=usuario_email_abertura,
+            action_type="aberto_por",
         ))
         # Item 2: Descrição (se houver)
         if ch.descricao:
@@ -641,8 +652,10 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                 tipo="abertura",
                 label=f"Descrição: \n{ch.descricao}",
                 anexos=None,
-                usuario_nome="Sistema",
-                usuario_email=None,
+                usuario_id=ch.usuario_id,
+                usuario_nome=usuario_nome_abertura,
+                usuario_email=usuario_email_abertura,
+                action_type="aberto_por",
             ))
         try:
             Notification.__table__.create(bind=engine, checkfirst=True)
