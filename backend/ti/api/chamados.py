@@ -1,8 +1,10 @@
 from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Body
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from core.db import get_db, engine
+from auth0.validator import get_current_user
 from ti.schemas.chamado import (
     ChamadoCreate,
     ChamadoOut,
