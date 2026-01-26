@@ -365,13 +365,6 @@ def criar_chamado_com_anexos(
         _sincronizar_sla(db, ch)
 
         if files:
-            user_id = None
-            if autor_email:
-                try:
-                    user = db.query(User).filter(User.email == autor_email).first()
-                    user_id = user.id if user else None
-                except Exception:
-                    user_id = None
             import hashlib
             saved = 0
             for f in files:
