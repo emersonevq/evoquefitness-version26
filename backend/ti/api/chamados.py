@@ -170,13 +170,20 @@ def listar_chamados(db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=ChamadoOut)
-def criar_chamado(payload: ChamadoCreate, db: Session = Depends(get_db)):
+def criar_chamado(payload: ChamadoCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     try:
         try:
             Chamado.__table__.create(bind=engine, checkfirst=True)
         except Exception:
             pass
-        ch = service_criar(db, payload)
+        # Buscar user_id pelo email do token Auth0
+        user_email = user.get("email")
+        user_id = None
+        if user_email:
+            db_user = db.query(User).filter(User.email == user_email).first()
+            if db_user:
+                user_id = db_user.id
+        ch = service_criar(db, payload, user_id=user_id)
 
         # Sincroniza o chamado com a tabela de SLA
         _sincronizar_sla(db, ch)
