@@ -838,6 +838,8 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
                 "protocolo": ch.protocolo,
                 "status": ch.status,
                 "status_anterior": prev,
+                "usuario_id": user_id,
+                "usuario_nome": f"{db_user.nome} {db_user.sobrenome}" if db_user else None,
             }, ensure_ascii=False)
             n = Notification(
                 tipo="chamado",
@@ -847,6 +849,7 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
                 recurso_id=ch.id,
                 acao="status",
                 dados=dados,
+                usuario_id=user_id,
             )
             db.add(n)
             # registrar em historico_status (única fonte de verdade)
