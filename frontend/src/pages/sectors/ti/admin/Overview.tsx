@@ -247,7 +247,26 @@ export default function Overview() {
   useEffect(() => {
     if (basicMetricsData) {
       console.log("[Overview] Setting basicMetricsData:", basicMetricsData);
-      setMetrics(basicMetricsData);
+
+      // Procura por campos de "total_chamados_mes" em diferentes estruturas
+      const processedData = { ...basicMetricsData };
+
+      // Se não tem total_chamados_mes, tenta buscar de outras estruturas
+      if (!processedData.total_chamados_mes && basicMetricsData.mes) {
+        processedData.total_chamados_mes = Number(basicMetricsData.mes.total || 0);
+      } else if (!processedData.total_chamados_mes && basicMetricsData.total_this_month) {
+        processedData.total_chamados_mes = Number(basicMetricsData.total_this_month);
+      }
+
+      // Se não tem tempo_resposta_mes, tenta buscar de outras estruturas
+      if (!processedData.tempo_resposta_mes && basicMetricsData.mes?.tempo_medio) {
+        processedData.tempo_resposta_mes = basicMetricsData.mes.tempo_medio;
+      } else if (!processedData.tempo_resposta_mes && basicMetricsData.tempo_medio_resposta_mes) {
+        processedData.tempo_resposta_mes = basicMetricsData.tempo_medio_resposta_mes;
+      }
+
+      console.log("[Overview] Processed basicMetricsData:", processedData);
+      setMetrics(processedData);
     }
   }, [basicMetricsData]);
 
