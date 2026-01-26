@@ -51,7 +51,10 @@ export function useSLAStatus(chamadoId: number) {
         );
         return response.data;
       } catch (error) {
-        console.error(`[SLA] Erro ao buscar status do chamado #${chamadoId}:`, error);
+        console.error(
+          `[SLA] Erro ao buscar status do chamado #${chamadoId}:`,
+          error,
+        );
         throw error;
       }
     },
