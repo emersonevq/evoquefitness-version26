@@ -274,22 +274,26 @@ export default function Overview() {
 
   useEffect(() => {
     if (slaMetricsData) {
-      // Merge das métricas de SLA com validação
-      setMetrics((prev) => ({
-        ...prev,
-        sla_compliance_24h: Number(slaMetricsData.sla_compliance_24h ?? 0),
-        sla_compliance_mes: Number(slaMetricsData.sla_compliance_mes ?? 0),
-        tempo_resposta_24h: slaMetricsData.tempo_resposta_24h ?? "—",
-        tempo_resposta_mes: slaMetricsData.tempo_resposta_mes ?? "—",
-        total_chamados_mes: Number(slaMetricsData.total_chamados_mes ?? 0),
-      }));
+      try {
+        // Merge das métricas de SLA com validação
+        setMetrics((prev) => ({
+          ...prev,
+          sla_compliance_24h: Number(slaMetricsData.sla_compliance_24h ?? 0),
+          sla_compliance_mes: Number(slaMetricsData.sla_compliance_mes ?? 0),
+          tempo_resposta_24h: slaMetricsData.tempo_resposta_24h ?? "—",
+          tempo_resposta_mes: slaMetricsData.tempo_resposta_mes ?? "—",
+          total_chamados_mes: Number(slaMetricsData.total_chamados_mes ?? 0),
+        }));
 
-      // Atualiza distribuição SLA
-      if (slaMetricsData?.sla_distribution) {
-        setSLAData({
-          dentro_sla: Number(slaMetricsData.sla_distribution.dentro_sla ?? 0),
-          fora_sla: Number(slaMetricsData.sla_distribution.fora_sla ?? 0),
-        });
+        // Atualiza distribuição SLA
+        if (slaMetricsData?.sla_distribution) {
+          setSLAData({
+            dentro_sla: Number(slaMetricsData.sla_distribution.dentro_sla ?? 0),
+            fora_sla: Number(slaMetricsData.sla_distribution.fora_sla ?? 0),
+          });
+        }
+      } catch (error) {
+        console.error("[Overview] Erro ao processar métricas de SLA:", error);
       }
     }
   }, [slaMetricsData]);
