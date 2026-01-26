@@ -591,19 +591,11 @@ class MetricsCalculator:
 
     @staticmethod
     def get_sla_distribution(db: Session) -> dict:
-        """Retorna distribuição de SLA (dentro/fora) - usa fonte unificada"""
+        """Retorna distribuição de SLA (dentro/fora) - SEM CACHE"""
         from ti.services.sla_metrics_unified import UnifiedSLAMetricsCalculator
 
-        # Tenta cache primeiro
-        cached = SLACacheManager.get(db, "sla_distribution")
-        if cached is not None:
-            print(f"[CACHE HIT] SLA Distribution: {cached}")
-            # Valida e extrai se estiver wrapped em {'value': ...}
-            if isinstance(cached, dict) and 'value' in cached and len(cached) == 1:
-                cached = cached['value']
-            return cached
-
-        print("[CACHE MISS] SLA Distribution calculando...")
+        # ⚠️ CACHE REMOVIDO: Métricas devem SEMPRE ser recalculadas para dados em tempo real
+        print("[CALC] SLA Distribution calculando (sem cache)...")
 
         agora = now_brazil_naive()
         mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -621,8 +613,7 @@ class MetricsCalculator:
             "total": result["total"]
         }
 
-        print(f"[CACHE SET] SLA Distribution: {formatted_result}")
-        SLACacheManager.set(db, "sla_distribution", formatted_result)
+        print(f"[CALC] SLA Distribution: {formatted_result}")
         return formatted_result
 
     @staticmethod
