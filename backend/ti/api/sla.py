@@ -1012,6 +1012,81 @@ def analisar_p90_recomendado(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Erro ao analisar P90: {e}")
 
 
+@router.post("/maintenance/force-recalculate-all")
+def force_recalculate_all_metrics(db: Session = Depends(get_db)):
+    """
+    Force completo: Limpa TODOS os caches e força recalcular TODAS as métricas.
+
+    Use este endpoint se as métricas estiverem congeladas ou inconsistentes.
+    Isso garante que os dados serão recalculados do zero na próxima requisição.
+    """
+    try:
+        from ti.services.sla_cache import SLACacheManager
+        from core.utils import now_brazil_naive
+
+        print("\n" + "="*60)
+        print("🔄 FORCE RECALCULATE: Limpando TODOS os caches...")
+        print("="*60)
+
+        # 1. Invalida TUDO do cache
+        SLACacheManager.invalidate_all_sla(db)
+        print("✓ Cache SLA invalidado")
+
+        # 2. Limpa tabela de cache do banco de dados
+        try:
+            from ti.models.metrics_cache import MetricsCacheDB
+            db.query(MetricsCacheDB).delete()
+            db.commit()
+            print("✓ Tabela de cache do banco de dados limpa")
+        except Exception as e:
+            print(f"⚠️ Erro ao limpar tabela de cache: {e}")
+
+        # 3. Força recalculamento das métricas principais
+        from ti.services.metrics import MetricsCalculator
+
+        print("\n🔄 Recalculando métricas...")
+        sla_24h = MetricsCalculator.get_sla_compliance_24h(db)
+        print(f"✓ SLA Compliance 24h: {sla_24h}%")
+
+        sla_mes = MetricsCalculator.get_sla_compliance_mes(db)
+        print(f"✓ SLA Compliance Mês: {sla_mes}%")
+
+        sla_dist = MetricsCalculator.get_sla_distribution(db)
+        print(f"✓ Distribuição SLA: {sla_dist['dentro_sla']} dentro, {sla_dist['fora_sla']} fora")
+
+        tempo_24h = MetricsCalculator.get_tempo_medio_resposta_24h(db)
+        print(f"✓ Tempo Resposta 24h: {tempo_24h}")
+
+        tempo_mes, total_mes = MetricsCalculator.get_tempo_medio_resposta_mes(db)
+        print(f"✓ Tempo Resposta Mês: {tempo_mes} ({total_mes} chamados)")
+
+        print("\n" + "="*60)
+        print("✅ Recalcul completo concluído com sucesso!")
+        print("="*60 + "\n")
+
+        return {
+            "ok": True,
+            "message": "Todos os caches foram limpos e métricas recalculadas",
+            "metrics": {
+                "sla_compliance_24h": sla_24h,
+                "sla_compliance_mes": sla_mes,
+                "sla_distribution": sla_dist,
+                "tempo_resposta_24h": tempo_24h,
+                "tempo_resposta_mes": tempo_mes,
+                "total_chamados_mes": total_mes,
+            },
+            "timestamp": now_brazil_naive().isoformat(),
+            "cache_status": "cleared"
+        }
+
+    except Exception as e:
+        import traceback
+        print(f"\n❌ ERRO ao fazer force recalculate: {e}")
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao forçar recalcul: {e}")
+
+
 @router.post("/maintenance/populate-primeira-resposta")
 def populate_primeira_resposta(db: Session = Depends(get_db)):
     """
