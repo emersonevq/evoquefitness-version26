@@ -94,7 +94,7 @@ export function SLASync() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Sincronização Inicial */}
         <Card className="p-6 space-y-4">
           <div className="space-y-2">
@@ -172,6 +172,51 @@ export function SLASync() {
               <>
                 <RefreshCw className="w-4 h-4" />
                 Recalcular SLAs
+              </>
+            )}
+          </Button>
+        </Card>
+
+        {/* Manutenção: Popular Data de Primeira Resposta */}
+        <Card className="p-6 space-y-4 border-blue-200 dark:border-blue-800">
+          <div className="space-y-2">
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <Wrench className="w-4 h-4" />
+              Manutenção de Dados
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Preenche o campo de primeira resposta em chamados antigos usando o
+              histórico. Útil para corrigir dados faltantes após migração.
+            </p>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm space-y-2">
+            <p className="font-medium text-blue-900 dark:text-blue-400">
+              O que acontece:
+            </p>
+            <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-300">
+              <li>Busca primeira mudança de status em cada chamado</li>
+              <li>Preenche data_primeira_resposta automaticamente</li>
+              <li>Invalida cache para recálculo de métricas</li>
+              <li>Corrige tempos médios de resposta</li>
+            </ul>
+          </div>
+
+          <Button
+            onClick={handlePopulateFirstResponse}
+            disabled={populatingFirstResponse}
+            className="w-full gap-2"
+            variant="outline"
+          >
+            {populatingFirstResponse ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin" />
+                Processando...
+              </>
+            ) : (
+              <>
+                <Wrench className="w-4 h-4" />
+                Popular Data de Resposta
               </>
             )}
           </Button>
