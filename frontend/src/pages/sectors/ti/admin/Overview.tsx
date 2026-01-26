@@ -211,6 +211,7 @@ export default function Overview() {
       queryKey: ["metrics-performance"],
       queryFn: async () => {
         const response = await api.get("/metrics/performance");
+        console.log("[Metrics] performanceMetricsData:", response.data);
         return response.data;
       },
       staleTime: 15 * 60 * 1000,
