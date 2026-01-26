@@ -195,27 +195,26 @@ export function SLASync() {
         </Card>
 
         {/* Manutenção: Popular Data de Primeira Resposta */}
-        <Card className="p-6 space-y-4 border-blue-200 dark:border-blue-800">
+        <Card className="p-6 space-y-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
           <div className="space-y-2">
             <h3 className="font-semibold text-lg flex items-center gap-2">
               <Wrench className="w-4 h-4" />
-              Manutenção de Dados
+              ⚠️ Manutenção & Diagnóstico
             </h3>
             <p className="text-sm text-muted-foreground">
-              Preenche o campo de primeira resposta em chamados antigos usando o
-              histórico. Útil para corrigir dados faltantes após migração.
+              Ferramentas avançadas para corrigir dados inconsistentes ou congelados.
+              Use quando as métricas não atualizam corretamente.
             </p>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm space-y-2">
-            <p className="font-medium text-blue-900 dark:text-blue-400">
-              O que acontece:
+          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-sm space-y-2">
+            <p className="font-medium text-red-900 dark:text-red-400">
+              ⚠️ Use quando necessário:
             </p>
-            <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-300">
-              <li>Busca primeira mudança de status em cada chamado</li>
-              <li>Preenche data_primeira_resposta automaticamente</li>
-              <li>Invalida cache para recálculo de métricas</li>
-              <li>Corrige tempos médios de resposta</li>
+            <ul className="list-disc list-inside space-y-1 text-red-800 dark:text-red-300">
+              <li><strong>Popular Data:</strong> Preenche histórico de respostas</li>
+              <li><strong>Forçar Recalcul:</strong> Limpa cache congelado e recalcula</li>
+              <li>Use "Forçar Recalcul" se as métricas não mudarem</li>
             </ul>
           </div>
 
