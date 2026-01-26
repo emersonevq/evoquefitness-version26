@@ -24,6 +24,7 @@ from ti.schemas.attachment import AnexoOut
 from ti.schemas.ticket import HistoricoItem, HistoricoResponse
 from sqlalchemy import inspect, text
 from core.email_msgraph import send_async, send_chamado_abertura, send_chamado_status
+from auth0.validator import get_current_user
 
 from fastapi.responses import Response
 
