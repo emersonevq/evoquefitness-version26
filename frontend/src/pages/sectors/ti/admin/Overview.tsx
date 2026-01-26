@@ -246,6 +246,7 @@ export default function Overview() {
   // Atualiza estado local quando dados do React Query chegam
   useEffect(() => {
     if (basicMetricsData) {
+      console.log("[Overview] Setting basicMetricsData:", basicMetricsData);
       setMetrics(basicMetricsData);
     }
   }, [basicMetricsData]);
