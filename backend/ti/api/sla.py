@@ -1010,3 +1010,95 @@ def analisar_p90_recomendado(db: Session = Depends(get_db)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erro ao analisar P90: {e}")
+
+
+@router.post("/maintenance/populate-primeira-resposta")
+def populate_primeira_resposta(db: Session = Depends(get_db)):
+    """
+    Preenche o campo data_primeira_resposta de chamados antigos usando o histórico de status.
+
+    Este endpoint é útil para corrigir o SLA quando o campo data_primeira_resposta está vazio
+    em chamados existentes. Usa o histórico de status para determinar a data da primeira resposta.
+
+    Returns:
+    - total_atualizados: Número de chamados que foram atualizados
+    - total_pulados: Número de chamados sem histórico de status
+    - erros: Número de erros durante o processo
+    """
+    try:
+        from ti.models.historico_status import HistoricoStatus
+        from sqlalchemy import and_
+
+        total_atualizados = 0
+        total_pulados = 0
+        erros = 0
+
+        print("\n🔄 Iniciando preenchimento de data_primeira_resposta...")
+
+        # Busca chamados que ainda NÃO têm data_primeira_resposta
+        chamados_sem_resposta = db.query(Chamado).filter(
+            Chamado.data_primeira_resposta.is_(None),
+            Chamado.deletado_em.is_(None)
+        ).all()
+
+        print(f"Total de chamados sem data_primeira_resposta: {len(chamados_sem_resposta)}")
+
+        for chamado in chamados_sem_resposta:
+            try:
+                # Busca o primeiro histórico onde o status mudou de "Aberto"
+                primeiro_historico = db.query(HistoricoStatus).filter(
+                    and_(
+                        HistoricoStatus.chamado_id == chamado.id,
+                        HistoricoStatus.status != "Aberto"
+                    )
+                ).order_by(HistoricoStatus.data_inicio.asc()).first()
+
+                if primeiro_historico and primeiro_historico.data_inicio:
+                    # Atualiza o chamado com a data da primeira resposta
+                    chamado.data_primeira_resposta = primeiro_historico.data_inicio
+                    db.add(chamado)
+                    total_atualizados += 1
+
+                    if total_atualizados % 10 == 0:
+                        db.commit()
+                        print(f"✓ {total_atualizados} chamados atualizados...")
+                else:
+                    # Não encontrou histórico com status diferente de "Aberto"
+                    total_pulados += 1
+
+            except Exception as e:
+                print(f"✗ Erro ao processar chamado {chamado.id}: {e}")
+                erros += 1
+                db.rollback()
+                continue
+
+        # Commit final
+        db.commit()
+
+        print(f"\n{'='*60}")
+        print(f"Processo concluído!")
+        print(f"✓ Chamados atualizados: {total_atualizados}")
+        print(f"⊘ Chamados sem histórico: {total_pulados}")
+        print(f"✗ Erros: {erros}")
+        print(f"{'='*60}\n")
+
+        # Invalida caches de SLA para forçar recálculo
+        from ti.services.sla_cache import SLACacheManager
+        SLACacheManager.invalidate_all_sla(db)
+
+        return {
+            "ok": True,
+            "message": "Dados de primeira resposta populados com sucesso",
+            "total_atualizados": total_atualizados,
+            "total_pulados": total_pulados,
+            "erros": erros,
+            "cache_invalidado": True,
+            "proxima_acao": "Os tempos de resposta serão recalculados na próxima requisição"
+        }
+
+    except Exception as e:
+        print(f"Erro crítico ao popular primeira resposta: {e}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao popular data_primeira_resposta: {e}")
