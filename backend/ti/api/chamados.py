@@ -921,7 +921,7 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
 
 
 @router.post("/{chamado_id}/assign", response_model=ChamadoOut)
-def atribuir_chamado(chamado_id: int, payload: dict = Body(...), db: Session = Depends(get_db)):
+def atribuir_chamado(chamado_id: int, payload: dict = Body(...), db: Session = Depends(get_db), user: dict | None = Depends(get_optional_user)):
     try:
         agent_id = payload.get("agent_id")
         if not agent_id:
@@ -939,6 +939,15 @@ def atribuir_chamado(chamado_id: int, payload: dict = Body(...), db: Session = D
         if not ch:
             raise HTTPException(status_code=404, detail="Chamado não encontrado")
 
+        # Buscar quem está fazendo a atribuição
+        user_email = user.get("email") if user else None
+        atribuidor = None
+        atribuidor_id = None
+        if user_email:
+            atribuidor = db.query(User).filter(User.email == user_email).first()
+            if atribuidor:
+                atribuidor_id = atribuidor.id
+
         # Atualizar a atribuição
         ch.status_assumido_por_id = agent_id
         ch.status_assumido_em = now_brazil_naive()
@@ -953,19 +962,40 @@ def atribuir_chamado(chamado_id: int, payload: dict = Body(...), db: Session = D
                 "id": ch.id,
                 "codigo": ch.codigo,
                 "agente_id": agent_id,
-                "agente_nome": agent.nome,
+                "agente_nome": f"{agent.nome} {agent.sobrenome}",
+                "atribuido_por_id": atribuidor_id,
+                "atribuido_por_nome": f"{atribuidor.nome} {atribuidor.sobrenome}" if atribuidor else None,
             }, ensure_ascii=False)
 
             n = Notification(
                 tipo="chamado",
                 titulo=f"Chamado atribuído: {ch.codigo}",
-                mensagem=f"Chamado {ch.protocolo} foi atribuído para {agent.nome}",
+                mensagem=f"Atribuído para {agent.nome} {agent.sobrenome}",
                 recurso="chamado",
                 recurso_id=chamado_id,
                 acao="atribuido",
                 dados=dados,
+                usuario_id=atribuidor_id,
             )
             db.add(n)
+
+            # Registrar no histórico de status
+            try:
+                HistoricoStatus.__table__.create(bind=engine, checkfirst=True)
+                hs = HistoricoStatus(
+                    chamado_id=ch.id,
+                    usuario_id=atribuidor_id,
+                    status=ch.status,
+                    status_anterior=ch.status,
+                    status_novo=ch.status,
+                    data_inicio=now_brazil_naive(),
+                    descricao=f"Atribuído para {agent.nome} {agent.sobrenome}",
+                    criado_em=now_brazil_naive(),
+                )
+                db.add(hs)
+            except Exception as e:
+                print(f"[ASSIGN HISTORICO ERROR] {e}")
+
             db.commit()
             db.refresh(n)
         except Exception as e:
