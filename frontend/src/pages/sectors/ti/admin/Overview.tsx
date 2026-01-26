@@ -290,6 +290,7 @@ export default function Overview() {
 
   useEffect(() => {
     if (performanceMetricsData) {
+      console.log("[Overview] performanceMetricsData:", performanceMetricsData);
       setPerformanceData(performanceMetricsData);
     }
   }, [performanceMetricsData]);
