@@ -101,14 +101,23 @@ class MetricsCalculator:
 
     @staticmethod
     def get_tempo_medio_resposta_mes(db: Session) -> tuple[str, int]:
-        """Calcula tempo médio de PRIMEIRA resposta deste mês usando Chamado.data_primeira_resposta"""
+        """Calcula tempo médio de PRIMEIRA resposta deste mês - SEM FILTROS RESTRITIVOS"""
         from ti.services.sla import SLACalculator
 
         agora = now_brazil_naive()
         mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         try:
-            # Busca chamados do mês que já tiveram primeira resposta
+            # Conta total de chamados do mês (sem status != "Cancelado")
+            total_chamados_mes = db.query(Chamado).filter(
+                and_(
+                    Chamado.data_abertura >= mes_inicio,
+                    Chamado.data_abertura <= agora,
+                    Chamado.status != "Cancelado"
+                )
+            ).count()
+
+            # ⚠️ Busca chamados que tiveram primeira resposta (com ou sem conclusão)
             chamados = db.query(Chamado).filter(
                 and_(
                     Chamado.data_abertura >= mes_inicio,
@@ -117,15 +126,6 @@ class MetricsCalculator:
                     Chamado.data_primeira_resposta.isnot(None)
                 )
             ).all()
-
-            # Conta total de chamados do mês (mesmo sem resposta)
-            total_chamados_mes = db.query(Chamado).filter(
-                and_(
-                    Chamado.data_abertura >= mes_inicio,
-                    Chamado.data_abertura <= agora,
-                    Chamado.status != "Cancelado"
-                )
-            ).count()
 
             if not chamados:
                 return "—", total_chamados_mes
