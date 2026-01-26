@@ -25,6 +25,8 @@ import {
   List,
   Search,
   ChevronDown,
+  User,
+  Headphones,
 } from "lucide-react";
 import { ticketsMock } from "../mock";
 import { apiFetch, API_BASE } from "@/lib/api";
@@ -55,6 +57,21 @@ interface UiTicket {
   visita?: string | null;
   gerente?: string | null;
   descricao?: string | null;
+}
+
+type ActionType = "aberto_por" | "ticket" | "status" | "atribuicao" | "outro";
+
+interface HistoryItem {
+  t: number;
+  label: string;
+  action_type?: ActionType;
+  attachments?: string[];
+  files?: { name: string; url: string; mime?: string }[];
+  usuario_nome?: string | null;
+  usuario_email?: string | null;
+  // Novos campos para diferenciar solicitante de agente
+  is_solicitante?: boolean;
+  is_suporte?: boolean;
 }
 
 const statusMap = [
@@ -110,6 +127,74 @@ function StatusPill({ status }: { status: TicketStatus }) {
     >
       {label}
     </span>
+  );
+}
+
+// Componente para mostrar quem fez a ação no histórico
+function HistoryAuthor({ item, solicitanteNome }: { item: HistoryItem; solicitanteNome: string }) {
+  const actionType = item.action_type;
+  const usuarioNome = item.usuario_nome;
+  const usuarioEmail = item.usuario_email;
+
+  // Se é abertura do chamado, mostra o solicitante
+  if (actionType === "aberto_por") {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+        <User className="h-3.5 w-3.5 text-blue-500" />
+        <span>
+          Aberto por:{" "}
+          <span className="font-medium text-foreground">
+            {solicitanteNome}
+          </span>
+        </span>
+      </div>
+    );
+  }
+
+  // Se não tem usuário, não mostra nada (evita "Sistema")
+  if (!usuarioNome || usuarioNome === "Sistema") {
+    return null;
+  }
+
+  // Define o label baseado no tipo de ação
+  let actionLabel = "Por";
+  let Icon = User;
+  let iconColor = "text-muted-foreground";
+
+  switch (actionType) {
+    case "ticket":
+      actionLabel = "Respondido por";
+      Icon = Headphones;
+      iconColor = "text-green-500";
+      break;
+    case "status":
+      actionLabel = "Alterado por";
+      Icon = Headphones;
+      iconColor = "text-amber-500";
+      break;
+    case "atribuicao":
+      actionLabel = "Atribuído por";
+      Icon = Headphones;
+      iconColor = "text-purple-500";
+      break;
+    default:
+      actionLabel = "Por";
+      Icon = User;
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+      <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
+      <span>
+        {actionLabel}:{" "}
+        <span className="font-medium text-foreground">
+          {usuarioNome}
+        </span>
+        {usuarioEmail && (
+          <span className="text-muted-foreground/70"> ({usuarioEmail})</span>
+        )}
+      </span>
+    </div>
   );
 }
 
@@ -517,16 +602,7 @@ export default function ChamadosPage() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<UiTicket | null>(null);
   const [tab, setTab] = useState<"resumo" | "historico" | "ticket">("resumo");
-  const [history, setHistory] = useState<
-    {
-      t: number;
-      label: string;
-      attachments?: string[];
-      files?: { name: string; url: string; mime?: string }[];
-      usuario_nome?: string | null;
-      usuario_email?: string | null;
-    }[]
-  >([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [template, setTemplate] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -539,6 +615,50 @@ export default function ChamadosPage() {
   const [selectedAgent, setSelectedAgent] = useState<string>("");
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
+  // Função para processar histórico da API
+  const processHistoryItems = useCallback((data: any, solicitanteNome: string): HistoryItem[] => {
+    if (!data?.items) return [];
+    
+    return data.items.map((it: any, index: number) => {
+      // Determina o tipo de ação
+      let action_type: ActionType = "outro";
+      const labelLower = (it.label || "").toLowerCase();
+      
+      if (labelLower.includes("aberto") || labelLower.includes("criado") || index === 0) {
+        action_type = "aberto_por";
+      } else if (labelLower.includes("ticket") || labelLower.includes("enviado") || labelLower.includes("respondido")) {
+        action_type = "ticket";
+      } else if (labelLower.includes("status") || labelLower.includes("alterado para")) {
+        action_type = "status";
+      } else if (labelLower.includes("atribuído") || labelLower.includes("atribuido")) {
+        action_type = "atribuicao";
+      }
+      
+      // Se é abertura, usa o nome do solicitante
+      const usuario_nome = action_type === "aberto_por" 
+        ? solicitanteNome 
+        : (it.usuario_nome && it.usuario_nome !== "Sistema" ? it.usuario_nome : null);
+      
+      return {
+        t: new Date(it.t).getTime(),
+        label: it.label,
+        action_type: it.action_type || action_type,
+        usuario_nome,
+        usuario_email: action_type === "aberto_por" ? null : it.usuario_email,
+        attachments: it.anexos
+          ? it.anexos.map((a: any) => a.nome_original)
+          : undefined,
+        files: it.anexos
+          ? it.anexos.map((a: any) => ({
+              name: a.nome_original,
+              url: `${API_BASE.replace(/\/api$/, "")}/${a.caminho_arquivo}`,
+              mime: a.mime_type || undefined,
+            }))
+          : undefined,
+      };
+    });
+  }, []);
+
   const initFromSelected = useCallback((s: UiTicket) => {
     setTab("resumo");
     setSubject(`Atualização do Chamado ${s.id}`);
@@ -550,46 +670,20 @@ export default function ChamadosPage() {
 
     apiFetch(`/chamados/${s.id}/historico`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
-      .then(
-        (data: {
-          items: {
-            t: string;
-            tipo: string;
-            label: string;
-            usuario_nome?: string | null;
-            usuario_email?: string | null;
-            anexos?: {
-              id: number;
-              nome_original: string;
-              caminho_arquivo: string;
-              mime_type?: string | null;
-            }[];
-          }[];
-        }) => {
-          const arr = data.items.map((it) => ({
-            t: new Date(it.t).getTime(),
-            label: it.label,
-            usuario_nome: it.usuario_nome,
-            usuario_email: it.usuario_email,
-            attachments: it.anexos
-              ? it.anexos.map((a) => a.nome_original)
-              : undefined,
-            files: it.anexos
-              ? it.anexos.map((a) => ({
-                  name: a.nome_original,
-                  url: `${API_BASE.replace(/\/api$/, "")}/${a.caminho_arquivo}`,
-                  mime: a.mime_type || undefined,
-                }))
-              : undefined,
-          }));
-          setHistory(arr);
-        },
-      )
+      .then((data) => {
+        const arr = processHistoryItems(data, s.solicitante);
+        setHistory(arr);
+      })
       .catch(() => {
         const base = new Date(s.criadoEm).getTime();
-        setHistory([{ t: base, label: "Chamado aberto" }]);
+        setHistory([{ 
+          t: base, 
+          label: "Chamado aberto",
+          action_type: "aberto_por",
+          usuario_nome: s.solicitante
+        }]);
       });
-  }, []);
+  }, [processHistoryItems]);
 
   async function handleSendTicket() {
     if (!selected) return;
@@ -612,22 +706,7 @@ export default function ChamadosPage() {
       const hist = await apiFetch(`/chamados/${selected.id}/historico`).then(
         (x) => x.json(),
       );
-      const arr = hist.items.map((it: any) => ({
-        t: new Date(it.t).getTime(),
-        label: it.label,
-        usuario_nome: it.usuario_nome,
-        usuario_email: it.usuario_email,
-        attachments: it.anexos
-          ? it.anexos.map((a: any) => a.nome_original)
-          : undefined,
-        files: it.anexos
-          ? it.anexos.map((a: any) => ({
-              name: a.nome_original,
-              url: `${API_BASE.replace(/\/api$/, "")}/${a.caminho_arquivo}`,
-              mime: a.mime_type || undefined,
-            }))
-          : undefined,
-      }));
+      const arr = processHistoryItems(hist, selected.solicitante);
       setHistory(arr);
       setTab("historico");
       setFiles([]);
@@ -672,22 +751,7 @@ export default function ChamadosPage() {
       const hist = await apiFetch(`/chamados/${selected.id}/historico`).then(
         (x) => x.json(),
       );
-      const arr = hist.items.map((it: any) => ({
-        t: new Date(it.t).getTime(),
-        label: it.label,
-        usuario_nome: it.usuario_nome,
-        usuario_email: it.usuario_email,
-        attachments: it.anexos
-          ? it.anexos.map((a: any) => a.nome_original)
-          : undefined,
-        files: it.anexos
-          ? it.anexos.map((a: any) => ({
-              name: a.nome_original,
-              url: `${API_BASE.replace(/\/api$/, "")}/${a.caminho_arquivo}`,
-              mime: a.mime_type || undefined,
-            }))
-          : undefined,
-      }));
+      const arr = processHistoryItems(hist, selected.solicitante);
       setHistory(arr);
       setTab("historico");
     } catch (e) {
@@ -900,23 +964,7 @@ export default function ChamadosPage() {
                           const hist = await apiFetch(
                             `/chamados/${id}/historico`,
                           ).then((x) => x.json());
-                          const arr = hist.items.map((it: any) => ({
-                            t: new Date(it.t).getTime(),
-                            label: it.label,
-                            usuario_nome: it.usuario_nome,
-                            usuario_email: it.usuario_email,
-                            action_type: it.action_type,
-                            attachments: it.anexos
-                              ? it.anexos.map((a: any) => a.nome_original)
-                              : undefined,
-                            files: it.anexos
-                              ? it.anexos.map((a: any) => ({
-                                  name: a.nome_original,
-                                  url: `${API_BASE.replace(/\/api$/, "")}/${a.caminho_arquivo}`,
-                                  mime: a.mime_type || undefined,
-                                }))
-                              : undefined,
-                          }));
+                          const arr = processHistoryItems(hist, selected.solicitante);
                           setHistory(arr);
                           setTab("historico");
                         }
@@ -1116,7 +1164,7 @@ export default function ChamadosPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Detalhes - Mantido igual ao anterior */}
+      {/* Modal de Detalhes */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
           {selected && (
@@ -1276,23 +1324,7 @@ export default function ChamadosPage() {
                               const hist = await apiFetch(
                                 `/chamados/${selected.id}/historico`,
                               ).then((x) => x.json());
-                              const arr = hist.items.map((it: any) => ({
-                                t: new Date(it.t).getTime(),
-                                label: it.label,
-                                usuario_nome: it.usuario_nome,
-                                usuario_email: it.usuario_email,
-                                action_type: it.action_type,
-                                attachments: it.anexos
-                                  ? it.anexos.map((a: any) => a.nome_original)
-                                  : undefined,
-                                files: it.anexos
-                                  ? it.anexos.map((a: any) => ({
-                                      name: a.nome_original,
-                                      url: `${API_BASE.replace(/\/api$/, "")}/${a.caminho_arquivo}`,
-                                      mime: a.mime_type || undefined,
-                                    }))
-                                  : undefined,
-                              }));
+                              const arr = processHistoryItems(hist, selected.solicitante);
                               setHistory(arr);
                               setTab("historico");
                               toast({
@@ -1328,48 +1360,59 @@ export default function ChamadosPage() {
                       Linha do tempo
                     </h3>
                     <div className="relative border-l-2 border-border pl-6 space-y-6">
-                      {history.map((ev, idx) => (
-                        <div key={idx} className="relative">
-                          <div className="absolute -left-[29px] top-2 h-4 w-4 rounded-full bg-primary ring-4 ring-background border-2 border-background" />
-                          <div className="space-y-2">
-                            <p className="font-medium">{ev.label}</p>
-                            <div className="text-xs text-muted-foreground space-y-1">
-                              <p>{new Date(ev.t).toLocaleString()}</p>
-                              {ev.usuario_nome && (
-                                <p className="text-xs text-muted-foreground">
-                                  {ev.action_type === "aberto_por" ? "Aberto por" : ev.action_type === "ticket" ? "Enviado por" : "Alterado por"}:{" "}
-                                  <span className="font-medium text-foreground">
-                                    {ev.usuario_nome}
-                                  </span>
-                                  {ev.usuario_email && ` (${ev.usuario_email})`}
-                                </p>
+                      {history.map((ev, idx) => {
+                        // Define cor do ponto baseado no tipo de ação
+                        const dotColor = ev.action_type === "aberto_por"
+                          ? "bg-blue-500"
+                          : ev.action_type === "ticket"
+                            ? "bg-green-500"
+                            : ev.action_type === "status"
+                              ? "bg-amber-500"
+                              : ev.action_type === "atribuicao"
+                                ? "bg-purple-500"
+                                : "bg-primary";
+
+                        return (
+                          <div key={idx} className="relative">
+                            <div className={`absolute -left-[29px] top-2 h-4 w-4 rounded-full ${dotColor} ring-4 ring-background border-2 border-background`} />
+                            <div className="space-y-2">
+                              <p className="font-medium">{ev.label}</p>
+                              <div className="text-xs text-muted-foreground">
+                                <p>{new Date(ev.t).toLocaleString()}</p>
+                              </div>
+                              
+                              {/* Componente de autor melhorado */}
+                              <HistoryAuthor 
+                                item={ev} 
+                                solicitanteNome={selected?.solicitante || "Usuário"} 
+                              />
+
+                              {ev.files && ev.files.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                  {ev.files.map((f, i) => (
+                                    <a
+                                      key={i}
+                                      href={f.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="group inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm hover:bg-accent transition-colors"
+                                    >
+                                      {f.mime?.startsWith("image/") ? (
+                                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                                      ) : (
+                                        <Paperclip className="w-4 h-4 text-muted-foreground" />
+                                      )}
+                                      <span className="truncate max-w-[200px] group-hover:text-primary">
+                                        {f.name}
+                                      </span>
+                                    </a>
+                                  ))}
+                                </div>
                               )}
                             </div>
-                            {ev.files && ev.files.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-3">
-                                {ev.files.map((f, i) => (
-                                  <a
-                                    key={i}
-                                    href={f.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="group inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm hover:bg-accent transition-colors"
-                                  >
-                                    {f.mime?.startsWith("image/") ? (
-                                      <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                                    ) : (
-                                      <Paperclip className="w-4 h-4 text-muted-foreground" />
-                                    )}
-                                    <span className="truncate max-w-[200px] group-hover:text-primary">
-                                      {f.name}
-                                    </span>
-                                  </a>
-                                ))}
-                              </div>
-                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {history.length === 0 && (
                         <p className="text-sm text-muted-foreground">
                           Nenhum histórico disponível
