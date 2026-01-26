@@ -351,7 +351,15 @@ def criar_chamado_com_anexos(
             visita=visita,
             descricao=descricao,
         )
-        ch = service_criar(db, payload)
+        # Tentar usar autor_email para encontrar o user_id
+        user_id = None
+        if autor_email:
+            try:
+                user = db.query(User).filter(User.email == autor_email).first()
+                user_id = user.id if user else None
+            except Exception:
+                pass
+        ch = service_criar(db, payload, user_id=user_id)
 
         # Sincroniza o chamado com a tabela de SLA
         _sincronizar_sla(db, ch)
