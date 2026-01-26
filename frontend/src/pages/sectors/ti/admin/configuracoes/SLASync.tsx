@@ -60,6 +60,24 @@ export function SLASync() {
     }
   };
 
+  const handlePopulateFirstResponse = async () => {
+    setPopulatingFirstResponse(true);
+    try {
+      const response = await api.post("/sla/maintenance/populate-primeira-resposta");
+      setPopulateStats(response.data);
+      toast.success(
+        `✓ ${response.data.total_atualizados} chamados atualizados com sucesso!`,
+      );
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.detail ||
+          "Erro ao popular data de primeira resposta",
+      );
+    } finally {
+      setPopulatingFirstResponse(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4">
