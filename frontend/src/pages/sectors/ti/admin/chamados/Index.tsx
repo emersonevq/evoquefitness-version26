@@ -1281,6 +1281,7 @@ export default function ChamadosPage() {
                                 label: it.label,
                                 usuario_nome: it.usuario_nome,
                                 usuario_email: it.usuario_email,
+                                action_type: it.action_type,
                                 attachments: it.anexos
                                   ? it.anexos.map((a: any) => a.nome_original)
                                   : undefined,
