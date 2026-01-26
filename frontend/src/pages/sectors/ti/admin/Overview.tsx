@@ -378,6 +378,7 @@ export default function Overview() {
           data,
         );
         // Invalida todas as queries quando SLA é resetado
+        queryClient.invalidateQueries({ queryKey: ["sla-status"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-weekly"] });
