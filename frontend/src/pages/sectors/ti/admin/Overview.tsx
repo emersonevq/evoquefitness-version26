@@ -281,13 +281,35 @@ export default function Overview() {
         console.log("[Overview] Processing slaMetricsData:", slaMetricsData);
 
         // Merge das métricas de SLA com validação
-        const updatedMetrics = {
+        const updatedMetrics: any = {
           sla_compliance_24h: Number(slaMetricsData.sla_compliance_24h ?? 0),
           sla_compliance_mes: Number(slaMetricsData.sla_compliance_mes ?? 0),
           tempo_resposta_24h: slaMetricsData.tempo_resposta_24h ?? "—",
-          tempo_resposta_mes: slaMetricsData.tempo_resposta_mes ?? "—",
-          total_chamados_mes: Number(slaMetricsData.total_chamados_mes ?? 0),
         };
+
+        // Tenta extrair tempo_resposta_mes de diferentes estruturas possíveis
+        if (slaMetricsData.tempo_resposta_mes) {
+          updatedMetrics.tempo_resposta_mes = slaMetricsData.tempo_resposta_mes;
+        } else if (slaMetricsData.tempo_medio_resposta) {
+          updatedMetrics.tempo_resposta_mes = slaMetricsData.tempo_medio_resposta;
+        } else if (slaMetricsData.metrics?.tempo_resposta_mes) {
+          updatedMetrics.tempo_resposta_mes = slaMetricsData.metrics.tempo_resposta_mes;
+        } else {
+          updatedMetrics.tempo_resposta_mes = "—";
+        }
+
+        // Tenta extrair total_chamados_mes de diferentes estruturas possíveis
+        if (slaMetricsData.total_chamados_mes) {
+          updatedMetrics.total_chamados_mes = Number(slaMetricsData.total_chamados_mes);
+        } else if (slaMetricsData.total_tickets_mes) {
+          updatedMetrics.total_chamados_mes = Number(slaMetricsData.total_tickets_mes);
+        } else if (slaMetricsData.sla_distribution?.total) {
+          updatedMetrics.total_chamados_mes = Number(slaMetricsData.sla_distribution.total);
+        } else if (slaMetricsData.metrics?.total_chamados_mes) {
+          updatedMetrics.total_chamados_mes = Number(slaMetricsData.metrics.total_chamados_mes);
+        } else {
+          updatedMetrics.total_chamados_mes = 0;
+        }
 
         console.log("[Overview] Updated metrics from SLA:", updatedMetrics);
 
@@ -298,11 +320,21 @@ export default function Overview() {
 
         // Atualiza distribuição SLA
         if (slaMetricsData?.sla_distribution) {
+          const totalSLA = Number(slaMetricsData.sla_distribution.dentro_sla ?? 0) +
+                          Number(slaMetricsData.sla_distribution.fora_sla ?? 0);
           console.log("[Overview] SLA Distribution:", slaMetricsData.sla_distribution);
           setSLAData({
             dentro_sla: Number(slaMetricsData.sla_distribution.dentro_sla ?? 0),
             fora_sla: Number(slaMetricsData.sla_distribution.fora_sla ?? 0),
           });
+
+          // Atualiza total_chamados_mes baseado na distribuição SLA se ainda for 0
+          if (updatedMetrics.total_chamados_mes === 0 && totalSLA > 0) {
+            setMetrics((prev) => ({
+              ...prev,
+              total_chamados_mes: totalSLA,
+            }));
+          }
         }
       } catch (error) {
         console.error("[Overview] Erro ao processar métricas de SLA:", error);
