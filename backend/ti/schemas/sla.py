@@ -1,18 +1,10 @@
 from __future__ import annotations
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
-from enum import Enum
+from ti.services.sla_status import SLAStatus
 
-
-class SLAStatusEnum(str, Enum):
-    """Estados de SLA mutuamente exclusivos"""
-    CUMPRIDO = "cumprido"
-    VIOLADO = "violado"
-    DENTRO_PRAZO = "dentro_prazo"
-    PROXIMO_VENCER = "proximo_vencer"
-    VENCIDO_ATIVO = "vencido_ativo"
-    PAUSADO = "pausado"
-    SEM_SLA = "sem_sla"
+# Alias para compatibilidade com código que possa usar SLAStatusEnum
+SLAStatusEnum = SLAStatus
 
 
 class SLAConfigurationCreate(BaseModel):
