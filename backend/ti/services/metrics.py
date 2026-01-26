@@ -178,7 +178,7 @@ class MetricsCalculator:
 
     @staticmethod
     def _calculate_sla_compliance_24h(db: Session) -> int:
-        """Cálculo real de SLA 24h - otimizado sem N+1"""
+        """Cálculo real de SLA 24h - INCLUI TODOS os chamados ativos"""
         try:
             from ti.services.sla import SLACalculator
             from ti.models.historico_status import HistoricoStatus
@@ -194,10 +194,10 @@ class MetricsCalculator:
             if not sla_configs:
                 return 0
 
-            # 2. Busca chamados ativos
+            # 2. Busca TODOS os chamados ativos (não filtra por data_primeira_resposta)
             chamados_ativos = db.query(Chamado).filter(
                 and_(
-                    Chamado.status.notin_(["Concluido", "Cancelado"])
+                    Chamado.status.notin_(["Concluído", "Cancelado"])
                 )
             ).all()
 
