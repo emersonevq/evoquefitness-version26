@@ -1333,7 +1333,7 @@ export default function ChamadosPage() {
                               <p>{new Date(ev.t).toLocaleString()}</p>
                               {ev.usuario_nome && (
                                 <p className="text-xs text-muted-foreground">
-                                  Alterado por:{" "}
+                                  {ev.action_type === "aberto_por" ? "Aberto por" : ev.action_type === "ticket" ? "Enviado por" : "Alterado por"}:{" "}
                                   <span className="font-medium text-foreground">
                                     {ev.usuario_nome}
                                   </span>
