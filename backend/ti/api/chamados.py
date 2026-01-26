@@ -768,7 +768,7 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{chamado_id}/status", response_model=ChamadoOut)
-def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session = Depends(get_db)):
+def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session = Depends(get_db), user: dict | None = Depends(get_optional_user)):
     try:
         novo = _normalize_status(payload.status)
         if novo not in ALLOWED_STATUSES:
@@ -778,6 +778,16 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
         ).first()
         if not ch:
             raise HTTPException(status_code=404, detail="Chamado não encontrado")
+
+        # Buscar user_id do usuário autenticado
+        user_email = user.get("email") if user else None
+        db_user = None
+        user_id = None
+        if user_email:
+            db_user = db.query(User).filter(User.email == user_email).first()
+            if db_user:
+                user_id = db_user.id
+
         prev = ch.status or "Aberto"
         ch.status = novo
         if prev == "Aberto" and novo != "Aberto" and ch.data_primeira_resposta is None:
