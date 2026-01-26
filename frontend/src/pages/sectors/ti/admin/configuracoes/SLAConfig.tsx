@@ -31,6 +31,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { SLASync } from "./SLASync";
 
 interface SLAConfig {
   id: number;
