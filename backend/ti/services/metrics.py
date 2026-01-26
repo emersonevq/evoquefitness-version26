@@ -274,7 +274,7 @@ class MetricsCalculator:
 
     @staticmethod
     def _calculate_sla_compliance_mes(db: Session) -> int:
-        """Cálculo real de SLA mensal - otimizado sem N+1"""
+        """Cálculo real de SLA mensal - INCLUI TODOS os chamados (com ou sem resposta)"""
         try:
             from ti.services.sla import SLACalculator
             from ti.models.historico_status import HistoricoStatus
@@ -293,13 +293,13 @@ class MetricsCalculator:
             if not sla_configs:
                 return 0
 
-            # 2. Busca chamados do mês que tiveram resposta
+            # 2. ⚠️ REMOVIDO: data_primeira_resposta.isnot(None)
+            # Busca TODOS os chamados do mês (com ou sem resposta)
             chamados_mes = db.query(Chamado).filter(
                 and_(
                     Chamado.data_abertura >= mes_inicio,
                     Chamado.data_abertura <= agora,
-                    Chamado.status != "Cancelado",
-                    Chamado.data_primeira_resposta.isnot(None)
+                    Chamado.status != "Cancelado"
                 )
             ).all()
 
