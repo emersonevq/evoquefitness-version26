@@ -31,6 +31,20 @@ from fastapi.responses import Response
 
 router = APIRouter(prefix="/chamados", tags=["TI - Chamados"])
 
+security = HTTPBearer(auto_error=False)
+
+
+async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict | None:
+    """
+    Tenta extrair o usuário autenticado, mas não falha se não houver token
+    """
+    if not credentials:
+        return None
+    try:
+        return get_current_user(credentials)
+    except Exception:
+        return None
+
 
 def _sincronizar_sla(db: Session, chamado: Chamado, status_anterior: str | None = None) -> None:
     """
