@@ -45,13 +45,20 @@ export function useSLAStatus(chamadoId: number) {
   return useQuery({
     queryKey: ["sla-status", chamadoId],
     queryFn: async () => {
-      const response = await api.get<SLAStatus>(
-        `/sla/chamado/${chamadoId}/status`,
-      );
-      return response.data;
+      try {
+        const response = await api.get<SLAStatus>(
+          `/sla/chamado/${chamadoId}/status`,
+        );
+        return response.data;
+      } catch (error) {
+        console.error(`[SLA] Erro ao buscar status do chamado #${chamadoId}:`, error);
+        throw error;
+      }
     },
     enabled: !!chamadoId,
     refetchInterval: 10000, // Atualiza a cada 10 segundos
     staleTime: 9000, // Cache válido por 9 segundos
+    retry: 2, // Tenta novamente 2 vezes antes de falhar
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 }
