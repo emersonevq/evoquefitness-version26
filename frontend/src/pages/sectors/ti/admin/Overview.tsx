@@ -277,18 +277,27 @@ export default function Overview() {
   useEffect(() => {
     if (slaMetricsData) {
       try {
+        console.log("[Overview] Processing slaMetricsData:", slaMetricsData);
+
         // Merge das métricas de SLA com validação
-        setMetrics((prev) => ({
-          ...prev,
+        const updatedMetrics = {
           sla_compliance_24h: Number(slaMetricsData.sla_compliance_24h ?? 0),
           sla_compliance_mes: Number(slaMetricsData.sla_compliance_mes ?? 0),
           tempo_resposta_24h: slaMetricsData.tempo_resposta_24h ?? "—",
           tempo_resposta_mes: slaMetricsData.tempo_resposta_mes ?? "—",
           total_chamados_mes: Number(slaMetricsData.total_chamados_mes ?? 0),
+        };
+
+        console.log("[Overview] Updated metrics from SLA:", updatedMetrics);
+
+        setMetrics((prev) => ({
+          ...prev,
+          ...updatedMetrics,
         }));
 
         // Atualiza distribuição SLA
         if (slaMetricsData?.sla_distribution) {
+          console.log("[Overview] SLA Distribution:", slaMetricsData.sla_distribution);
           setSLAData({
             dentro_sla: Number(slaMetricsData.sla_distribution.dentro_sla ?? 0),
             fora_sla: Number(slaMetricsData.sla_distribution.fora_sla ?? 0),
