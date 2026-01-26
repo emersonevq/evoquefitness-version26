@@ -208,6 +208,78 @@ class BusinessHoursCalculator:
         return total_minutes / 60.0
     
     @staticmethod
+    def calculate_business_hours_excluding_paused(
+        chamado_id: int,
+        start: datetime,
+        end: datetime,
+        db: Optional[Session] = None,
+        historicos_cache: Optional[dict] = None
+    ) -> float:
+        """
+        Calcula horas de NEGÓCIO excluindo períodos em "Em análise".
+
+        Lógica:
+        1. Calcula horas de negócio total (start até end)
+        2. Identifica períodos onde status = "Em análise"
+        3. Subtrai horas em "Em análise" do total
+
+        Args:
+            chamado_id: ID do chamado (para buscar histórico)
+            start: Data/hora inicial
+            end: Data/hora final
+            db: Sessão do banco (necessário)
+            historicos_cache: Cache de históricos {chamado_id: [historicos]} (otimização para bulk)
+
+        Returns:
+            Horas de negócio SEM contar pausas
+        """
+        if start >= end:
+            return 0.0
+
+        # 1. Calcula tempo total em horas de negócio
+        tempo_total = BusinessHoursCalculator.calculate_business_hours(start, end, db)
+
+        # 2. Busca períodos em "Em análise"
+        from ti.models.historico_status import HistoricoStatus
+
+        if historicos_cache and chamado_id in historicos_cache:
+            # Usa cache se disponível (bulk operation)
+            historicos_analise = [
+                h for h in historicos_cache[chamado_id]
+                if h.status.lower() in ["em análise", "em analise"]
+                and h.data_inicio and h.data_fim
+                and h.data_inicio >= start
+                and h.data_fim <= end
+            ]
+        else:
+            # Query ao banco (operação individual)
+            historicos_analise = db.query(HistoricoStatus).filter(
+                and_(
+                    HistoricoStatus.chamado_id == chamado_id,
+                    HistoricoStatus.status.in_(["Em análise", "Em Análise"]),
+                    HistoricoStatus.data_inicio.isnot(None),
+                    HistoricoStatus.data_fim.isnot(None),
+                    HistoricoStatus.data_inicio >= start,
+                    HistoricoStatus.data_fim <= end,
+                )
+            ).all()
+
+        # 3. Subtrai horas em "Em análise"
+        tempo_analise_total = 0.0
+        for hist in historicos_analise:
+            if hist.data_inicio and hist.data_fim:
+                tempo_analise = BusinessHoursCalculator.calculate_business_hours(
+                    hist.data_inicio,
+                    hist.data_fim,
+                    db
+                )
+                tempo_analise_total += tempo_analise
+
+        # Retorna tempo total menos pausa
+        tempo_sla = tempo_total - tempo_analise_total
+        return max(0, tempo_sla)  # Nunca negativo
+
+    @staticmethod
     def calculate_business_hours_between(
         start: datetime,
         end: datetime,
@@ -215,7 +287,7 @@ class BusinessHoursCalculator:
     ) -> dict:
         """
         Calcula horas de negócio com informações detalhadas.
-        
+
         Retorna:
         {
             "total_horas": float,
@@ -226,30 +298,30 @@ class BusinessHoursCalculator:
         }
         """
         total_horas = BusinessHoursCalculator.calculate_business_hours(start, end, db)
-        
+
         dias_calendário = (end.date() - start.date()).days + 1
         dias_úteis = 0
         dias_não_úteis = 0
         horas_por_dia = []
-        
+
         current = start.replace(hour=0, minute=0, second=0, microsecond=0)
-        
+
         while current.date() <= end.date():
             is_business_day = BusinessHoursCalculator.is_business_day(current)
-            
+
             if is_business_day:
                 dias_úteis += 1
             else:
                 dias_não_úteis += 1
-            
+
             horas_por_dia.append({
                 "data": current.date().isoformat(),
                 "é_dia_útil": is_business_day,
                 "dia_semana": ["seg", "ter", "qua", "qui", "sex", "sab", "dom"][current.weekday()],
             })
-            
+
             current += timedelta(days=1)
-        
+
         return {
             "total_horas": total_horas,
             "dias_calendário": dias_calendário,
