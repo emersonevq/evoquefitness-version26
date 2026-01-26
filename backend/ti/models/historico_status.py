@@ -9,28 +9,16 @@ class HistoricoStatus(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     chamado_id: Mapped[int] = mapped_column(Integer, ForeignKey("chamado.id"), nullable=False)
+    usuario_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("user.id"), nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False)
+    status_anterior: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    status_novo: Mapped[str | None] = mapped_column(String(50), nullable=True)
     data_inicio: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     data_fim: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    usuario_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     descricao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    criado_em: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-
-    # Campos antigos compatibilidade (mapeamento virtual)
-    @property
-    def status_anterior(self) -> str | None:
-        """Extrai status anterior da descrição"""
-        if self.descricao and "→" in self.descricao:
-            parts = self.descricao.split("→")
-            if len(parts) > 0:
-                return parts[0].replace("Migrado: ", "").strip()
-        return None
-
-    @property
-    def status_novo(self) -> str | None:
-        """Retorna o status atual (status)"""
-        return self.status
 
     @property
     def data_acao(self) -> datetime | None:
