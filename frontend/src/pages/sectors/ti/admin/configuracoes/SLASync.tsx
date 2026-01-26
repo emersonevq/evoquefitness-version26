@@ -78,6 +78,23 @@ export function SLASync() {
     }
   };
 
+  const handleForceRecalculate = async () => {
+    setLoading(true);
+    try {
+      const response = await api.post("/sla/maintenance/force-recalculate-all");
+      setStats(response.data.metrics);
+      toast.success(
+        "✓ Recalcul forçado! Todos os caches foram limpos e métricas recalculadas.",
+      );
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.detail || "Erro ao forçar recalcul",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4">
