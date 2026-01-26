@@ -634,6 +634,10 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
             if usuario_abertura:
                 usuario_nome_abertura = f"{usuario_abertura.nome} {usuario_abertura.sobrenome}"
                 usuario_email_abertura = usuario_abertura.email
+        else:
+            # Fallback: usar solicitante e email do chamado se não houver usuario_id
+            usuario_nome_abertura = ch.solicitante
+            usuario_email_abertura = ch.email
 
         items.append(HistoricoItem(
             t=first_dt,
