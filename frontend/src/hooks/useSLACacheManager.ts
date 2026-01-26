@@ -50,7 +50,7 @@ export function useSLACacheManager() {
         await api.post(`/sla/cache/invalidate-chamado/${chamadoId}`);
 
         // Invalida queries do React Query relacionadas
-        queryClient.invalidateQueries({ queryKey: ["sla-status-realtime"] });
+        queryClient.invalidateQueries({ queryKey: ["sla-status", chamadoId] });
         queryClient.invalidateQueries({ queryKey: ["metrics-dashboard"] });
 
         console.log(`[CACHE] Cache do chamado #${chamadoId} invalidado`);
@@ -67,13 +67,20 @@ export function useSLACacheManager() {
       await api.post("/sla/cache/invalidate-all");
 
       // Invalida todas as queries de SLA e métricas
-      queryClient.invalidateQueries({ queryKey: ["sla-"] });
-      queryClient.invalidateQueries({ queryKey: ["metrics-"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       queryClient.invalidateQueries({ queryKey: ["sla-config"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-sla"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-weekly"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-monthly"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-performance"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-p90-analysis"] });
 
       console.log("[CACHE] Todos os caches de SLA invalidados");
     } catch (error) {
       console.error("[CACHE] Erro ao invalidar todos os caches:", error);
+      throw error;
     }
   }, [queryClient]);
 

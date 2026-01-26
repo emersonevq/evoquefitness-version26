@@ -1,7 +1,16 @@
 import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 
+type SLAStatusType =
+  | "cumprido"
+  | "violado"
+  | "dentro_prazo"
+  | "proximo_vencer"
+  | "vencido_ativo"
+  | "pausado"
+  | "sem_sla";
+
 interface SLAStatusBadgeProps {
-  status: "ok" | "vencido" | "em_andamento" | "congelado" | "sem_configuracao";
+  status: SLAStatusType;
   tempoDecorrido: number;
   limiteHoras: number;
   tipo?: "resposta" | "resolucao";
@@ -13,41 +22,55 @@ export function SLAStatusBadge({
   limiteHoras,
   tipo = "resolucao",
 }: SLAStatusBadgeProps) {
-  const statusConfig = {
-    ok: {
+  const statusConfig: Record<SLAStatusType, any> = {
+    cumprido: {
       bg: "bg-green-100 dark:bg-green-900/30",
       text: "text-green-700 dark:text-green-300",
       border: "border-green-200 dark:border-green-800",
       icon: CheckCircle2,
-      label: "Dentro do SLA",
+      label: "Cumprido",
     },
-    vencido: {
+    violado: {
       bg: "bg-red-100 dark:bg-red-900/30",
       text: "text-red-700 dark:text-red-300",
       border: "border-red-200 dark:border-red-800",
       icon: AlertCircle,
-      label: "SLA Vencido",
+      label: "Violado",
     },
-    em_andamento: {
-      bg: "bg-amber-100 dark:bg-amber-900/30",
-      text: "text-amber-700 dark:text-amber-300",
-      border: "border-amber-200 dark:border-amber-800",
-      icon: Clock,
-      label: "Em Andamento",
-    },
-    congelado: {
+    dentro_prazo: {
       bg: "bg-blue-100 dark:bg-blue-900/30",
       text: "text-blue-700 dark:text-blue-300",
       border: "border-blue-200 dark:border-blue-800",
-      icon: Clock,
-      label: "Congelado",
+      icon: CheckCircle2,
+      label: "Dentro do Prazo",
     },
-    sem_configuracao: {
+    proximo_vencer: {
+      bg: "bg-amber-100 dark:bg-amber-900/30",
+      text: "text-amber-700 dark:text-amber-300",
+      border: "border-amber-200 dark:border-amber-800",
+      icon: AlertCircle,
+      label: "Próximo de Vencer",
+    },
+    vencido_ativo: {
+      bg: "bg-red-100 dark:bg-red-900/30",
+      text: "text-red-700 dark:text-red-300",
+      border: "border-red-200 dark:border-red-800",
+      icon: AlertCircle,
+      label: "Vencido",
+    },
+    pausado: {
       bg: "bg-gray-100 dark:bg-gray-900/30",
       text: "text-gray-700 dark:text-gray-300",
       border: "border-gray-200 dark:border-gray-800",
       icon: Clock,
-      label: "Sem Configuração",
+      label: "Pausado",
+    },
+    sem_sla: {
+      bg: "bg-gray-100 dark:bg-gray-900/30",
+      text: "text-gray-700 dark:text-gray-300",
+      border: "border-gray-200 dark:border-gray-800",
+      icon: Clock,
+      label: "Sem SLA",
     },
   };
 
@@ -97,18 +120,8 @@ export function SLAStatusBadge({
 interface SLAStatusOverviewProps {
   chamadoId: number;
   prioridade: string;
-  statusResposta:
-    | "ok"
-    | "vencido"
-    | "em_andamento"
-    | "congelado"
-    | "sem_configuracao";
-  statusResolucao:
-    | "ok"
-    | "vencido"
-    | "em_andamento"
-    | "congelado"
-    | "sem_configuracao";
+  statusResposta: SLAStatusType;
+  statusResolucao: SLAStatusType;
   tempoRepostagem: number;
   tempoResolucao: number;
   limiteResposta: number;

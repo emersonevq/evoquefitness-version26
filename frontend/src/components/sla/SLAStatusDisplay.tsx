@@ -12,7 +12,7 @@ interface SLAStatusDisplayProps {
 }
 
 export function SLAStatusDisplay({ chamadoId }: SLAStatusDisplayProps) {
-  const { data, isLoading, isFetching } = useSLAStatus(chamadoId);
+  const { data, isLoading, isFetching, error } = useSLAStatus(chamadoId);
 
   if (isLoading) {
     return (
@@ -24,10 +24,32 @@ export function SLAStatusDisplay({ chamadoId }: SLAStatusDisplayProps) {
     );
   }
 
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-5 space-y-4 h-fit">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-red-900 dark:text-red-200">
+              Erro ao carregar SLA
+            </p>
+            <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+              {error instanceof Error
+                ? error.message
+                : "Tente novamente em alguns momentos"}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!data) {
     return (
       <div className="rounded-lg border bg-card p-5 space-y-4 h-fit">
-        <p className="text-sm text-muted-foreground">Sem dados de SLA</p>
+        <p className="text-sm text-muted-foreground">
+          Sem dados de SLA disponíveis
+        </p>
       </div>
     );
   }

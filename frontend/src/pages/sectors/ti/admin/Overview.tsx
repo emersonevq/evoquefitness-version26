@@ -156,6 +156,7 @@ export default function Overview() {
     queryKey: ["metrics-basic"],
     queryFn: async () => {
       const response = await api.get("/metrics/dashboard/basic");
+      console.log("[Metrics] basicMetricsData:", response.data);
       return response.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -198,6 +199,7 @@ export default function Overview() {
     queryKey: ["metrics-sla"],
     queryFn: async () => {
       const response = await api.get("/metrics/dashboard/sla");
+      console.log("[Metrics] slaMetricsData:", response.data);
       return response.data;
     },
     staleTime: 30 * 60 * 1000, // 30 minutos
@@ -209,6 +211,7 @@ export default function Overview() {
       queryKey: ["metrics-performance"],
       queryFn: async () => {
         const response = await api.get("/metrics/performance");
+        console.log("[Metrics] performanceMetricsData:", response.data);
         return response.data;
       },
       staleTime: 15 * 60 * 1000,
@@ -244,7 +247,41 @@ export default function Overview() {
   // Atualiza estado local quando dados do React Query chegam
   useEffect(() => {
     if (basicMetricsData) {
-      setMetrics(basicMetricsData);
+      console.log("[Overview] Setting basicMetricsData:", basicMetricsData);
+
+      // Procura por campos de "total_chamados_mes" em diferentes estruturas
+      const processedData = { ...basicMetricsData };
+
+      // Se não tem total_chamados_mes, tenta buscar de outras estruturas
+      if (!processedData.total_chamados_mes && basicMetricsData.mes) {
+        processedData.total_chamados_mes = Number(
+          basicMetricsData.mes.total || 0,
+        );
+      } else if (
+        !processedData.total_chamados_mes &&
+        basicMetricsData.total_this_month
+      ) {
+        processedData.total_chamados_mes = Number(
+          basicMetricsData.total_this_month,
+        );
+      }
+
+      // Se não tem tempo_resposta_mes, tenta buscar de outras estruturas
+      if (
+        !processedData.tempo_resposta_mes &&
+        basicMetricsData.mes?.tempo_medio
+      ) {
+        processedData.tempo_resposta_mes = basicMetricsData.mes.tempo_medio;
+      } else if (
+        !processedData.tempo_resposta_mes &&
+        basicMetricsData.tempo_medio_resposta_mes
+      ) {
+        processedData.tempo_resposta_mes =
+          basicMetricsData.tempo_medio_resposta_mes;
+      }
+
+      console.log("[Overview] Processed basicMetricsData:", processedData);
+      setMetrics(processedData);
     }
   }, [basicMetricsData]);
 
@@ -268,28 +305,88 @@ export default function Overview() {
 
   useEffect(() => {
     if (performanceMetricsData) {
+      console.log("[Overview] performanceMetricsData:", performanceMetricsData);
       setPerformanceData(performanceMetricsData);
     }
   }, [performanceMetricsData]);
 
   useEffect(() => {
     if (slaMetricsData) {
-      // Merge das métricas de SLA com validação
-      setMetrics((prev) => ({
-        ...prev,
-        sla_compliance_24h: Number(slaMetricsData.sla_compliance_24h ?? 0),
-        sla_compliance_mes: Number(slaMetricsData.sla_compliance_mes ?? 0),
-        tempo_resposta_24h: slaMetricsData.tempo_resposta_24h ?? "—",
-        tempo_resposta_mes: slaMetricsData.tempo_resposta_mes ?? "—",
-        total_chamados_mes: Number(slaMetricsData.total_chamados_mes ?? 0),
-      }));
+      try {
+        console.log("[Overview] Processing slaMetricsData:", slaMetricsData);
 
-      // Atualiza distribuição SLA
-      if (slaMetricsData?.sla_distribution) {
-        setSLAData({
-          dentro_sla: Number(slaMetricsData.sla_distribution.dentro_sla ?? 0),
-          fora_sla: Number(slaMetricsData.sla_distribution.fora_sla ?? 0),
-        });
+        // Merge das métricas de SLA com validação
+        const updatedMetrics: any = {
+          sla_compliance_24h: Number(slaMetricsData.sla_compliance_24h ?? 0),
+          sla_compliance_mes: Number(slaMetricsData.sla_compliance_mes ?? 0),
+          tempo_resposta_24h: slaMetricsData.tempo_resposta_24h ?? "—",
+        };
+
+        // Tenta extrair tempo_resposta_mes de diferentes estruturas possíveis
+        if (slaMetricsData.tempo_resposta_mes) {
+          updatedMetrics.tempo_resposta_mes = slaMetricsData.tempo_resposta_mes;
+        } else if (slaMetricsData.tempo_medio_resposta) {
+          updatedMetrics.tempo_resposta_mes =
+            slaMetricsData.tempo_medio_resposta;
+        } else if (slaMetricsData.metrics?.tempo_resposta_mes) {
+          updatedMetrics.tempo_resposta_mes =
+            slaMetricsData.metrics.tempo_resposta_mes;
+        } else {
+          updatedMetrics.tempo_resposta_mes = "—";
+        }
+
+        // Tenta extrair total_chamados_mes de diferentes estruturas possíveis
+        if (slaMetricsData.total_chamados_mes) {
+          updatedMetrics.total_chamados_mes = Number(
+            slaMetricsData.total_chamados_mes,
+          );
+        } else if (slaMetricsData.total_tickets_mes) {
+          updatedMetrics.total_chamados_mes = Number(
+            slaMetricsData.total_tickets_mes,
+          );
+        } else if (slaMetricsData.sla_distribution?.total) {
+          updatedMetrics.total_chamados_mes = Number(
+            slaMetricsData.sla_distribution.total,
+          );
+        } else if (slaMetricsData.metrics?.total_chamados_mes) {
+          updatedMetrics.total_chamados_mes = Number(
+            slaMetricsData.metrics.total_chamados_mes,
+          );
+        } else {
+          updatedMetrics.total_chamados_mes = 0;
+        }
+
+        console.log("[Overview] Updated metrics from SLA:", updatedMetrics);
+
+        setMetrics((prev) => ({
+          ...prev,
+          ...updatedMetrics,
+        }));
+
+        // Atualiza distribuição SLA
+        if (slaMetricsData?.sla_distribution) {
+          const totalSLA =
+            Number(slaMetricsData.sla_distribution.dentro_sla ?? 0) +
+            Number(slaMetricsData.sla_distribution.fora_sla ?? 0);
+          console.log(
+            "[Overview] SLA Distribution:",
+            slaMetricsData.sla_distribution,
+          );
+          setSLAData({
+            dentro_sla: Number(slaMetricsData.sla_distribution.dentro_sla ?? 0),
+            fora_sla: Number(slaMetricsData.sla_distribution.fora_sla ?? 0),
+          });
+
+          // Atualiza total_chamados_mes baseado na distribuição SLA se ainda for 0
+          if (updatedMetrics.total_chamados_mes === 0 && totalSLA > 0) {
+            setMetrics((prev) => ({
+              ...prev,
+              total_chamados_mes: totalSLA,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("[Overview] Erro ao processar métricas de SLA:", error);
       }
     }
   }, [slaMetricsData]);
@@ -300,6 +397,8 @@ export default function Overview() {
       return response.data;
     },
     onSuccess: (data: any) => {
+      // Invalida todas as queries de SLA e métricas
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-sla"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
@@ -361,6 +460,7 @@ export default function Overview() {
           "[Overview] Recebido evento metrics:updated, invalidando cache",
         );
         // Invalida todas as queries de métricas para forçar refetch imediato
+        queryClient.invalidateQueries({ queryKey: ["sla-status"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-weekly"] });
@@ -375,6 +475,7 @@ export default function Overview() {
           data,
         );
         // Invalida todas as queries quando SLA é resetado
+        queryClient.invalidateQueries({ queryKey: ["sla-status"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
         queryClient.invalidateQueries({ queryKey: ["metrics-weekly"] });
@@ -545,8 +646,14 @@ export default function Overview() {
         />
         <Metric
           label="Tempo médio de resposta"
-          value={metrics?.tempo_resposta_mes || "—"}
-          sub={`Este mês (${metrics?.total_chamados_mes || 0} chamados)`}
+          value={
+            metrics?.tempo_resposta_mes
+              ? typeof metrics.tempo_resposta_mes === "number"
+                ? `${metrics.tempo_resposta_mes.toFixed(1)}h`
+                : metrics.tempo_resposta_mes
+              : "—"
+          }
+          sub={`Este mês (${Math.max(metrics?.total_chamados_mes || 0, slaData.dentro_sla + slaData.fora_sla)} chamados)`}
           variant="blue"
           icon={Clock}
         />

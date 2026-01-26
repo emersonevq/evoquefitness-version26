@@ -49,10 +49,14 @@ export function useAutoRecalculateSLA() {
     },
     onSuccess: () => {
       // Invalida queries de SLA/métricas para atualizar UI
-      queryClient.invalidateQueries({ queryKey: ["sla-status-realtime"] });
       queryClient.invalidateQueries({ queryKey: ["sla-status"] });
-      queryClient.invalidateQueries({ queryKey: ["metrics-dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["sla-"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-config"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-sla"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-weekly"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-monthly"] });
+      queryClient.invalidateQueries({ queryKey: ["metrics-performance"] });
 
       console.log("[SLA] SLA recalculado e cache invalidado com sucesso");
     },

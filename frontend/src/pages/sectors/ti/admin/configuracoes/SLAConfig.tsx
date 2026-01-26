@@ -198,6 +198,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-config"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       setShowConfigDialog(false);
       setFormData({
         prioridade: "",
@@ -222,6 +223,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-config"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       setShowConfigDialog(false);
       setEditingConfig(null);
       setFormData({
@@ -245,6 +247,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-config"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       toast.success("Configuração removida com sucesso");
     },
     onError: (error: any) => {
@@ -261,6 +264,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-business-hours"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       setShowHoursDialog(false);
       setHoursData({
         dia_semana: 0,
@@ -284,6 +288,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-business-hours"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       setShowHoursDialog(false);
       setEditingHours(null);
       setHoursData({
@@ -304,6 +309,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-business-hours"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       toast.success("Horário removido com sucesso");
     },
     onError: (error: any) => {
@@ -318,6 +324,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-feriados"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       setShowHolidayDialog(false);
       setFeriadoData({
         data: new Date().toISOString().split("T")[0],
@@ -344,6 +351,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-feriados"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       setShowHolidayDialog(false);
       setEditingFeriado(null);
       setFeriadoData({
@@ -364,6 +372,7 @@ export function SLA() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sla-feriados"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       toast.success("Feriado removido com sucesso");
     },
     onError: (error: any) => {
@@ -377,6 +386,7 @@ export function SLA() {
       return response.data;
     },
     onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       const stats = data.estatisticas || {};
       toast.success(
         `${stats.sincronizados || 0} problema(s) sincronizado(s) com SLA`,
@@ -396,6 +406,7 @@ export function SLA() {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["sla-config"] });
+      queryClient.invalidateQueries({ queryKey: ["sla-status"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-basic"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-sla"] });
       queryClient.invalidateQueries({ queryKey: ["metrics-daily"] });
