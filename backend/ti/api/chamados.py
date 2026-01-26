@@ -856,14 +856,15 @@ def atualizar_status(chamado_id: int, payload: ChamadoStatusUpdate, db: Session 
             try:
                 hs = HistoricoStatus(
                     chamado_id=ch.id,
-                    usuario_id=None,
+                    usuario_id=user_id,
                     status=ch.status,
+                    status_anterior=prev,
+                    status_novo=ch.status,
                     data_inicio=agora,
-                    descricao=f"Migrado: {prev} → {ch.status}",
-                    created_at=agora,
-                    updated_at=agora,
+                    descricao=f"{prev} → {ch.status}",
+                    criado_em=agora,
                 )
-                print(f"[HISTORICO STATUS] Criando novo: chamado_id={ch.id}, status={ch.status}, data_inicio={agora}")
+                print(f"[HISTORICO STATUS] Criando novo: chamado_id={ch.id}, status={ch.status}, usuario_id={user_id}, data_inicio={agora}")
                 db.add(hs)
                 db.commit()
                 print(f"[HISTORICO STATUS] Sucesso ao salvar registro")
