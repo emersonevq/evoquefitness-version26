@@ -31,6 +31,19 @@ from fastapi.responses import Response
 router = APIRouter(prefix="/chamados", tags=["TI - Chamados"])
 
 
+async def get_optional_user(credentials: HTTPAuthorizationCredentials = None) -> dict | None:
+    """
+    Tenta extrair e validar o usuário do token Auth0, mas não falha se não houver token
+    """
+    if not credentials:
+        return None
+    try:
+        from auth0.validator import verify_auth0_token
+        return verify_auth0_token(credentials.credentials)
+    except Exception:
+        return None
+
+
 def _sincronizar_sla(db: Session, chamado: Chamado, status_anterior: str | None = None) -> None:
     """
     Função auxiliar para sincronizar um chamado com a tabela de histórico de SLA.
