@@ -199,6 +199,7 @@ export default function Overview() {
     queryKey: ["metrics-sla"],
     queryFn: async () => {
       const response = await api.get("/metrics/dashboard/sla");
+      console.log("[Metrics] slaMetricsData:", response.data);
       return response.data;
     },
     staleTime: 30 * 60 * 1000, // 30 minutos
