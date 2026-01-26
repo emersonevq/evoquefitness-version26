@@ -5,54 +5,40 @@ from sqlalchemy import and_, or_
 from ti.models.sla_config import SLAConfiguration, SLABusinessHours, HistoricoSLA
 from ti.models.historico_status import HistoricoStatus
 from ti.models.chamado import Chamado
+from ti.services.sla_business_hours import BusinessHoursCalculator
 from core.utils import now_brazil_naive
 
 
 class SLACalculator:
-    DEFAULT_BUSINESS_HOURS = {
-        0: ("08:00", "18:00"),
-        1: ("08:00", "18:00"),
-        2: ("08:00", "18:00"),
-        3: ("08:00", "18:00"),
-        4: ("08:00", "18:00"),
-    }
-
+    # Delegados para BusinessHoursCalculator (evita duplicação)
     @staticmethod
     def get_business_hours(db: Session, dia_semana: int) -> tuple[str, str] | None:
-        try:
-            bh = db.query(SLABusinessHours).filter(
-                and_(
-                    SLABusinessHours.dia_semana == dia_semana,
-                    SLABusinessHours.ativo == True
-                )
-            ).first()
-            if bh:
-                return (bh.hora_inicio, bh.hora_fim)
-        except Exception:
-            pass
-        return SLACalculator.DEFAULT_BUSINESS_HOURS.get(dia_semana)
+        """Wrapper para compatibilidade - usa BusinessHoursCalculator"""
+        import datetime as dt_module
+        dummy_date = dt_module.datetime.now().replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        # Cria date para o dia da semana especificado
+        while dummy_date.weekday() != dia_semana:
+            dummy_date += dt_module.timedelta(days=1)
+
+        result = BusinessHoursCalculator.get_business_hours_for_day(dummy_date, db)
+        if result:
+            return (result[0].strftime("%H:%M"), result[1].strftime("%H:%M"))
+        return None
 
     @staticmethod
     def is_business_day(data: datetime) -> bool:
-        return data.weekday() < 5
+        """Wrapper para compatibilidade - usa BusinessHoursCalculator"""
+        return BusinessHoursCalculator.is_business_day(data)
 
     @staticmethod
     def is_business_time(dt: datetime, db: Session | None = None) -> bool:
-        if not SLACalculator.is_business_day(dt):
-            return False
-
-        bh = None
-        if db:
-            bh = SLACalculator.get_business_hours(db, dt.weekday())
-        else:
-            bh = SLACalculator.DEFAULT_BUSINESS_HOURS.get(dt.weekday())
-
+        """Wrapper para compatibilidade - usa BusinessHoursCalculator"""
+        bh = BusinessHoursCalculator.get_business_hours_for_day(dt, db)
         if not bh:
             return False
-
-        hora_inicio = datetime.strptime(bh[0], "%H:%M").time()
-        hora_fim = datetime.strptime(bh[1], "%H:%M").time()
-        return hora_inicio <= dt.time() <= hora_fim
+        return bh[0] <= dt.time() <= bh[1]
 
     @staticmethod
     def calculate_business_hours_excluding_paused(
@@ -63,106 +49,20 @@ class SLACalculator:
         historicos_cache: dict | None = None
     ) -> float:
         """
-        Calcula horas de NEGÓCIO excluindo períodos em "Em análise".
-
-        Lógica:
-        1. Calcula horas de negócio total (start até end)
-        2. Identifica períodos onde status = "Em análise"
-        3. Subtrai horas em "Em análise" do total
-
-        Parâmetro historicos_cache: dict {chamado_id: [historicos]}
-        Se fornecido, evita queries ao banco (otimização para bulk)
-
-        Retorna: horas de negócio SEM contar pausa
+        Wrapper para BusinessHoursCalculator.calculate_business_hours_excluding_paused
+        Mantém compatibilidade com código existente.
         """
-        if start >= end:
-            return 0.0
-
-        # 1. Calcula tempo total em horas de negócio
-        tempo_total = SLACalculator.calculate_business_hours(start, end, db)
-
-        # 2. Busca períodos em "Em análise"
-        from ti.models.historico_status import HistoricoStatus
-
-        if historicos_cache and chamado_id in historicos_cache:
-            # Usa cache se disponível (bulk operation)
-            historicos_analise = [
-                h for h in historicos_cache[chamado_id]
-                if h.status.lower() in ["em análise", "em analise"]
-                and h.data_inicio and h.data_fim
-                and h.data_inicio >= start
-                and h.data_fim <= end
-            ]
-        else:
-            # Query ao banco (operação individual)
-            historicos_analise = db.query(HistoricoStatus).filter(
-                and_(
-                    HistoricoStatus.chamado_id == chamado_id,
-                    HistoricoStatus.status.in_(["Em análise", "Em Análise"]),
-                    HistoricoStatus.data_inicio.isnot(None),
-                    HistoricoStatus.data_fim.isnot(None),
-                    HistoricoStatus.data_inicio >= start,
-                    HistoricoStatus.data_fim <= end,
-                )
-            ).all()
-
-        # 3. Subtrai horas em "Em análise"
-        tempo_analise_total = 0.0
-        for hist in historicos_analise:
-            if hist.data_inicio and hist.data_fim:
-                tempo_analise = SLACalculator.calculate_business_hours(
-                    hist.data_inicio,
-                    hist.data_fim,
-                    db
-                )
-                tempo_analise_total += tempo_analise
-
-        # Retorna tempo total menos pausa
-        tempo_sla = tempo_total - tempo_analise_total
-        return max(0, tempo_sla)  # Nunca negativo
+        return BusinessHoursCalculator.calculate_business_hours_excluding_paused(
+            chamado_id, start, end, db, historicos_cache
+        )
 
     @staticmethod
     def calculate_business_hours(start: datetime, end: datetime, db: Session | None = None) -> float:
-        if start >= end:
-            return 0.0
-
-        total_minutes = 0
-        current = start
-
-        while current < end:
-            next_day = (current + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-
-            if not SLACalculator.is_business_day(current):
-                current = next_day
-                continue
-
-            bh = None
-            if db:
-                bh = SLACalculator.get_business_hours(db, current.weekday())
-            else:
-                bh = SLACalculator.DEFAULT_BUSINESS_HOURS.get(current.weekday())
-
-            if not bh:
-                current = next_day
-                continue
-
-            hora_inicio = datetime.strptime(bh[0], "%H:%M").time()
-            hora_fim = datetime.strptime(bh[1], "%H:%M").time()
-
-            day_start = current.replace(hour=hora_inicio.hour, minute=hora_inicio.minute, second=0, microsecond=0)
-            day_end = current.replace(hour=hora_fim.hour, minute=hora_fim.minute, second=0, microsecond=0)
-
-            if current < day_start:
-                current = day_start
-
-            if end <= day_end:
-                total_minutes += int((end - current).total_seconds() / 60)
-                break
-            else:
-                total_minutes += int((day_end - current).total_seconds() / 60)
-                current = next_day
-
-        return total_minutes / 60.0
+        """
+        Wrapper para BusinessHoursCalculator.calculate_business_hours
+        Mantém compatibilidade com código existente.
+        """
+        return BusinessHoursCalculator.calculate_business_hours(start, end, db)
 
     @staticmethod
     def get_sla_config_by_priority(db: Session, prioridade: str) -> SLAConfiguration | None:

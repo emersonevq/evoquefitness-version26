@@ -43,6 +43,13 @@ except Exception as e:
 # Create the FastAPI application (HTTP)
 _http = FastAPI(title="Evoque API - TI", version="1.0.0")
 
+# Garantir que tabelas de SLA existem
+try:
+    from ti.scripts.ensure_sla_tables import ensure_sla_tables
+    ensure_sla_tables()
+except Exception as e:
+    print(f"⚠️  Erro ao garantir tabelas de SLA: {e}")
+
 # Criar índices de performance na inicialização
 try:
     create_indices()

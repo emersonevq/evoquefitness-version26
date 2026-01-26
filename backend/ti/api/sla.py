@@ -30,10 +30,6 @@ router = APIRouter(prefix="/sla", tags=["TI - SLA"])
 @router.get("/config", response_model=list[SLAConfigurationOut])
 def listar_sla_config(db: Session = Depends(get_db)):
     try:
-        try:
-            SLAConfiguration.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
         return db.query(SLAConfiguration).order_by(SLAConfiguration.prioridade.asc()).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar configurações de SLA: {e}")
@@ -44,11 +40,6 @@ def criar_sla_config(payload: SLAConfigurationCreate, db: Session = Depends(get_
     from ti.services.sla_transaction_manager import SLATransactionManager
 
     try:
-        try:
-            SLAConfiguration.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         existente = db.query(SLAConfiguration).filter(
             SLAConfiguration.prioridade == payload.prioridade
         ).first()
@@ -69,18 +60,13 @@ def criar_sla_config(payload: SLAConfigurationCreate, db: Session = Depends(get_
                 atualizado_em=now_brazil_naive(),
             )
             db_session.add(config)
-            # Flush para gerar o ID, mas não commit ainda
             db_session.flush()
-
-            # Invalida cache atomicamente
             SLACacheManager.invalidate_all_sla(db_session)
-
             return config
 
         result = SLATransactionManager.execute_atomic(db, _create_config)
 
         if result.success:
-            # Atualiza referência no banco para refresh
             config = result.data
             db.refresh(config)
             return config
@@ -102,11 +88,6 @@ def atualizar_sla_config(
     from ti.services.sla_transaction_manager import SLATransactionManager
 
     try:
-        try:
-            SLAConfiguration.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         def _update_config(db_session: Session, config_id: int, payload: SLAConfigurationUpdate) -> SLAConfiguration:
             config = db_session.query(SLAConfiguration).filter(SLAConfiguration.id == config_id).first()
             if not config:
@@ -124,10 +105,7 @@ def atualizar_sla_config(
             config.atualizado_em = now_brazil_naive()
             db_session.add(config)
             db_session.flush()
-
-            # Invalida cache atomicamente
             SLACacheManager.invalidate_all_sla(db_session)
-
             return config
 
         result = SLATransactionManager.execute_atomic(
@@ -150,11 +128,6 @@ def atualizar_sla_config(
 @router.delete("/config/{config_id}")
 def deletar_sla_config(config_id: int, db: Session = Depends(get_db)):
     try:
-        try:
-            SLAConfiguration.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         config = db.query(SLAConfiguration).filter(SLAConfiguration.id == config_id).first()
         if not config:
             raise HTTPException(status_code=404, detail="Configuração de SLA não encontrada")
@@ -171,10 +144,6 @@ def deletar_sla_config(config_id: int, db: Session = Depends(get_db)):
 @router.get("/business-hours", response_model=list[SLABusinessHoursOut])
 def listar_business_hours(db: Session = Depends(get_db)):
     try:
-        try:
-            SLABusinessHours.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
         return db.query(SLABusinessHours).order_by(SLABusinessHours.dia_semana.asc()).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar horários comerciais: {e}")
@@ -183,11 +152,6 @@ def listar_business_hours(db: Session = Depends(get_db)):
 @router.post("/business-hours", response_model=SLABusinessHoursOut)
 def criar_business_hours(payload: SLABusinessHoursCreate, db: Session = Depends(get_db)):
     try:
-        try:
-            SLABusinessHours.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         existente = db.query(SLABusinessHours).filter(
             SLABusinessHours.dia_semana == payload.dia_semana
         ).first()
@@ -222,11 +186,6 @@ def atualizar_business_hours(
     db: Session = Depends(get_db)
 ):
     try:
-        try:
-            SLABusinessHours.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         bh = db.query(SLABusinessHours).filter(SLABusinessHours.id == bh_id).first()
         if not bh:
             raise HTTPException(status_code=404, detail="Horário comercial não encontrado")
@@ -249,11 +208,6 @@ def atualizar_business_hours(
 @router.delete("/business-hours/{bh_id}")
 def deletar_business_hours(bh_id: int, db: Session = Depends(get_db)):
     try:
-        try:
-            SLABusinessHours.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         bh = db.query(SLABusinessHours).filter(SLABusinessHours.id == bh_id).first()
         if not bh:
             raise HTTPException(status_code=404, detail="Horário comercial não encontrado")
@@ -270,12 +224,6 @@ def deletar_business_hours(bh_id: int, db: Session = Depends(get_db)):
 @router.get("/chamado/{chamado_id}/status", response_model=dict)
 def obter_sla_status_chamado(chamado_id: int, db: Session = Depends(get_db)):
     try:
-        try:
-            SLAConfiguration.__table__.create(bind=engine, checkfirst=True)
-            SLABusinessHours.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         chamado = db.query(Chamado).filter(
             (Chamado.id == chamado_id) & (Chamado.deletado_em.is_(None))
         ).first()
@@ -293,11 +241,6 @@ def obter_sla_status_chamado(chamado_id: int, db: Session = Depends(get_db)):
 @router.get("/historico/{chamado_id}", response_model=list[HistoricoSLAOut])
 def obter_historico_sla(chamado_id: int, db: Session = Depends(get_db)):
     try:
-        try:
-            HistoricoSLA.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         historicos = db.query(HistoricoSLA).filter(
             HistoricoSLA.chamado_id == chamado_id
         ).order_by(HistoricoSLA.criado_em.desc()).all()
@@ -310,20 +253,14 @@ def obter_historico_sla(chamado_id: int, db: Session = Depends(get_db)):
 @router.post("/sync/todos-chamados")
 def sincronizar_todos_chamados(db: Session = Depends(get_db)):
     """
-    Sincroniza todos os chamados existentes com a tabela de hist��rico de SLA.
+    Sincroniza todos os chamados existentes com a tabela de histórico de SLA.
     Operação atômica: ou sincroniza tudo ou não sincroniza nada.
     """
     from ti.services.sla_transaction_manager import SLATransactionManager
 
     try:
-        try:
-            HistoricoSLA.__table__.create(bind=engine, checkfirst=True)
-            Chamado.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         def _sincronizar_impl(db_session: Session) -> dict:
-            """Implementa��ão da sincronização"""
+            """Implementação da sincronização"""
             stats = {
                 "total_chamados": 0,
                 "sincronizados": 0,
@@ -335,14 +272,12 @@ def sincronizar_todos_chamados(db: Session = Depends(get_db)):
             stats["total_chamados"] = len(chamados)
 
             for chamado in chamados:
-                # Verifica se já existe histórico para este chamado
                 existing = db_session.query(HistoricoSLA).filter(
                     HistoricoSLA.chamado_id == chamado.id
                 ).first()
 
                 sla_status = SLACalculator.get_sla_status(db_session, chamado)
 
-                # Extrai métricas de resposta e resolução
                 resposta_metric = sla_status.get("resposta_metric")
                 resolucao_metric = sla_status.get("resolucao_metric")
 
@@ -352,7 +287,6 @@ def sincronizar_todos_chamados(db: Session = Depends(get_db)):
                 limite_sla_horas = resolucao_metric.get("tempo_limite_horas") if resolucao_metric else None
 
                 if existing:
-                    # Atualiza registro existente
                     existing.status_novo = chamado.status
                     existing.tempo_resposta_horas = tempo_resposta_horas
                     existing.limite_sla_resposta_horas = limite_sla_resposta_horas
@@ -362,7 +296,6 @@ def sincronizar_todos_chamados(db: Session = Depends(get_db)):
                     db_session.add(existing)
                     stats["atualizados"] += 1
                 else:
-                    # Cria novo registro
                     historico = HistoricoSLA(
                         chamado_id=chamado.id,
                         usuario_id=None,
@@ -381,7 +314,6 @@ def sincronizar_todos_chamados(db: Session = Depends(get_db)):
 
             return stats
 
-        # Executa com transação atômica
         result = SLATransactionManager.execute_with_lock(
             db,
             "historico_sla",
@@ -408,12 +340,6 @@ def recalcular_sla_painel(db: Session = Depends(get_db)):
     from ti.services.sla_transaction_manager import SLATransactionManager
 
     try:
-        try:
-            HistoricoSLA.__table__.create(bind=engine, checkfirst=True)
-            Chamado.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         def _recalcular_impl(db_session: Session) -> dict:
             """Implementação do recálculo"""
             stats = {
@@ -435,7 +361,6 @@ def recalcular_sla_painel(db: Session = Depends(get_db)):
             for chamado in chamados:
                 sla_status = SLACalculator.get_sla_status(db_session, chamado)
 
-                # Extrai métricas de resposta e resolução
                 resposta_metric = sla_status.get("resposta_metric")
                 resolucao_metric = sla_status.get("resolucao_metric")
 
@@ -444,7 +369,6 @@ def recalcular_sla_painel(db: Session = Depends(get_db)):
                 tempo_resolucao_horas = resolucao_metric.get("tempo_decorrido_horas") if resolucao_metric else None
                 limite_sla_horas = resolucao_metric.get("tempo_limite_horas") if resolucao_metric else None
 
-                # Atualiza ou cria histórico com cálculo atual
                 existing = db_session.query(HistoricoSLA).filter(
                     HistoricoSLA.chamado_id == chamado.id
                 ).order_by(HistoricoSLA.criado_em.desc()).first()
@@ -485,7 +409,6 @@ def recalcular_sla_painel(db: Session = Depends(get_db)):
 
             return stats
 
-        # Executa com transação atômica
         result = SLATransactionManager.execute_with_lock(
             db,
             "historico_sla",
@@ -493,7 +416,6 @@ def recalcular_sla_painel(db: Session = Depends(get_db)):
         )
 
         if result.success:
-            # LIMPA CACHE DE MÉTRICAS PARA FORÇAR RECALCULAR
             print(f"[PAINEL RECALC] Invalidando cache de métricas...")
             try:
                 from ti.services.cache_manager_incremental import IncrementalMetricsCache
@@ -501,7 +423,6 @@ def recalcular_sla_painel(db: Session = Depends(get_db)):
             except Exception as e:
                 print(f"[PAINEL RECALC] Aviso ao invalidar cache: {e}")
 
-            # EMITE ATUALIZAÇÃO PARA O FRONTEND
             try:
                 import anyio
                 stats = result.data
@@ -516,7 +437,6 @@ def recalcular_sla_painel(db: Session = Depends(get_db)):
                 print(f"[PAINEL RECALC] ✅ Evento WebSocket emitido para frontend")
             except Exception as e:
                 print(f"[PAINEL RECALC] ⚠️  Erro ao emitir evento WebSocket: {e}")
-                pass
 
             return result.data
         else:
@@ -530,10 +450,7 @@ def recalcular_sla_painel(db: Session = Depends(get_db)):
 
 @router.post("/cache/invalidate-chamado/{chamado_id}")
 def invalidar_cache_chamado(chamado_id: int, db: Session = Depends(get_db)):
-    """
-    Invalida caches relacionados a um chamado específico.
-    Deve ser chamado quando um chamado é atualizado.
-    """
+    """Invalida caches relacionados a um chamado específico."""
     try:
         SLACacheManager.invalidate_by_chamado(db, chamado_id)
         return {"ok": True, "chamado_id": chamado_id}
@@ -543,10 +460,7 @@ def invalidar_cache_chamado(chamado_id: int, db: Session = Depends(get_db)):
 
 @router.post("/cache/invalidate-all")
 def invalidar_todos_caches(db: Session = Depends(get_db)):
-    """
-    Invalida TODOS os caches de SLA.
-    Deve ser chamado quando configurações de SLA são alteradas.
-    """
+    """Invalida TODOS os caches de SLA."""
     try:
         SLACacheManager.invalidate_all_sla(db)
         return {"ok": True, "message": "Todos os caches de SLA foram invalidados"}
@@ -556,12 +470,10 @@ def invalidar_todos_caches(db: Session = Depends(get_db)):
 
 @router.post("/cache/warmup")
 def preaquecer_cache(db: Session = Depends(get_db)):
-    """
-    Pré-aquece o cache ao abrir o painel administrativo.
-    Calcula todas as métricas pesadas antecipadamente.
-    """
+    """Pré-aquece o cache ao abrir o painel administrativo."""
     try:
         from ti.services.metrics import MetricsCalculator
+        import time
 
         stats = {
             "total_calculados": 0,
@@ -569,7 +481,6 @@ def preaquecer_cache(db: Session = Depends(get_db)):
             "erro": None
         }
 
-        import time
         start = time.time()
 
         MetricsCalculator.get_sla_compliance_24h(db)
@@ -597,9 +508,7 @@ def preaquecer_cache(db: Session = Depends(get_db)):
 
 @router.get("/cache/stats")
 def obter_stats_cache(db: Session = Depends(get_db)):
-    """
-    Retorna estatísticas do sistema de cache.
-    """
+    """Retorna estatísticas do sistema de cache."""
     try:
         stats = SLACacheManager.get_stats(db)
         return stats
@@ -614,10 +523,7 @@ def obter_stats_cache(db: Session = Depends(get_db)):
 
 @router.post("/cache/cleanup")
 def limpar_cache_expirado(db: Session = Depends(get_db)):
-    """
-    Remove caches expirados do banco de dados.
-    Deve ser executado periodicamente (recomendado: a cada hora).
-    """
+    """Remove caches expirados do banco de dados."""
     try:
         removed = SLACacheManager.clear_expired(db)
         return {
@@ -630,10 +536,7 @@ def limpar_cache_expirado(db: Session = Depends(get_db)):
 
 @router.post("/cache/reset-all")
 def resetar_todo_cache(db: Session = Depends(get_db)):
-    """
-    Reseta COMPLETAMENTE o cache de métricas e SLA.
-    Deve ser usado apenas após limpar configurações de SLA.
-    """
+    """Reseta COMPLETAMENTE o cache de métricas e SLA."""
     try:
         from ti.models.metrics_cache import MetricsCacheDB
 
@@ -659,8 +562,6 @@ def resetar_sla_completo(db: Session = Depends(get_db)):
     2. Registra a data de reset em cada configuração de SLA
     3. Remove dados de cache P90 incremental
     4. Próximos cálculos ignorarão dados anteriores ao reset
-
-    Apenas chamados APÓS este reset serão considerados nos próximos cálculos P90.
     """
     try:
         from ti.models.metrics_cache import MetricsCacheDB
@@ -669,15 +570,12 @@ def resetar_sla_completo(db: Session = Depends(get_db)):
 
         print(f"\n[SLA RESET] Iniciando reset completo do sistema SLA")
 
-        # 1. Invalida TUDO em memória primeiro
         print(f"[SLA RESET] Invalidando cache em memória...")
         SLACacheManager.invalidate_all_sla(db)
 
-        # 2. Limpa TUDO do banco de dados
         print(f"[SLA RESET] Limpando banco de dados...")
         db.query(MetricsCacheDB).delete()
 
-        # 3. Registra o reset em todas as configurações de SLA
         print(f"[SLA RESET] Registrando data de reset nas configurações...")
         configs = db.query(SLAConfiguration).all()
         for config in configs:
@@ -686,12 +584,10 @@ def resetar_sla_completo(db: Session = Depends(get_db)):
             print(f"  - {config.prioridade}: reset em {agora.isoformat()}")
             db.add(config)
 
-        # 4. Commit de tudo atomicamente
         db.commit()
 
         print(f"[SLA RESET] ✅ Reset concluído com sucesso!")
 
-        # EMITE ATUALIZAÇÃO PARA O FRONTEND
         try:
             import anyio
             anyio.from_thread.run(sio.emit, "sla:reset", {
@@ -702,7 +598,6 @@ def resetar_sla_completo(db: Session = Depends(get_db)):
             print(f"[SLA RESET] ✅ Evento WebSocket emitido para frontend")
         except Exception as e:
             print(f"[SLA RESET] ⚠️  Erro ao emitir evento WebSocket: {e}")
-            pass
 
         return {
             "ok": True,
@@ -723,16 +618,7 @@ def resetar_sla_completo(db: Session = Depends(get_db)):
 
 @router.post("/recalcular/p90")
 def recalcular_sla_p90(db: Session = Depends(get_db)):
-    """
-    Recalcula SLA baseado em P90 (90º percentil) dos últimos 30 dias.
-
-    Lógica:
-    1. Busca todos os chamados fechados (concluído/cancelado) dos últimos 30 dias
-    2. Calcula tempo de resposta (primeira mudança de status) descontando "Em análise"
-    3. Calcula tempo de resolução (até concluído/cancelado)
-    4. Calcula P90 para ambos
-    5. Atualiza configurações de SLA com os novos tempos
-    """
+    """Recalcula SLA baseado em P90 (90º percentil) dos últimos 30 dias."""
     try:
         from ti.services.sla_p90_calculator import SLAP90Calculator
 
@@ -747,18 +633,7 @@ def recalcular_sla_p90(db: Session = Depends(get_db)):
 
 @router.post("/recalcular/p90-incremental")
 def recalcular_sla_p90_incremental(db: Session = Depends(get_db)):
-    """
-    Recalcula SLA baseado em P90 de forma INCREMENTAL.
-
-    Lógica:
-    1. Carrega do cache os tempos já processados
-    2. Busca APENAS chamados posteriores ao último processado
-    3. Combina dados anteriores + novos
-    4. Recalcula P90 usando a lista completa
-    5. Armazena novamente no cache
-
-    Muito mais eficiente que recalcular tudo do zero!
-    """
+    """Recalcula SLA baseado em P90 de forma INCREMENTAL."""
     try:
         from ti.services.sla_p90_incremental import SLAP90Incremental
 
@@ -773,10 +648,7 @@ def recalcular_sla_p90_incremental(db: Session = Depends(get_db)):
 
 @router.get("/validate/config/{config_id}")
 def validar_configuracao(config_id: int, db: Session = Depends(get_db)):
-    """
-    Valida uma configuração de SLA individual.
-    Retorna status de validação e lista de erros/warnings.
-    """
+    """Valida uma configuração de SLA individual."""
     try:
         config = db.query(SLAConfiguration).filter(
             SLAConfiguration.id == config_id
@@ -795,10 +667,7 @@ def validar_configuracao(config_id: int, db: Session = Depends(get_db)):
 
 @router.get("/validate/all")
 def validar_todas_configuracoes(db: Session = Depends(get_db)):
-    """
-    Valida TODAS as configurações de SLA e horários comerciais.
-    Retorna resumo completo com erros e warnings.
-    """
+    """Valida TODAS as configurações de SLA e horários comerciais."""
     try:
         validacao = SLAValidator.validar_todas_configuracoes(db)
         return validacao
@@ -823,10 +692,7 @@ def validar_todas_configuracoes(db: Session = Depends(get_db)):
 
 @router.get("/validate/chamado/{chamado_id}")
 def validar_dados_chamado(chamado_id: int, db: Session = Depends(get_db)):
-    """
-    Valida dados de um chamado específico para cálculo de SLA.
-    Útil para debug de cálculos incorretos.
-    """
+    """Valida dados de um chamado específico para cálculo de SLA."""
     try:
         validacao = SLAValidator.validar_dados_chamado(db, chamado_id)
         return validacao
@@ -838,10 +704,6 @@ def validar_dados_chamado(chamado_id: int, db: Session = Depends(get_db)):
 def listar_feriados(db: Session = Depends(get_db)):
     """Lista todos os feriados cadastrados"""
     try:
-        try:
-            SLAFeriado.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
         return db.query(SLAFeriado).order_by(SLAFeriado.data.asc()).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar feriados: {e}")
@@ -851,11 +713,6 @@ def listar_feriados(db: Session = Depends(get_db)):
 def criar_feriado(payload: SLAFeriadoCreate, db: Session = Depends(get_db)):
     """Cria um novo feriado"""
     try:
-        try:
-            SLAFeriado.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         existente = db.query(SLAFeriado).filter(
             SLAFeriado.data == payload.data
         ).first()
@@ -891,11 +748,6 @@ def atualizar_feriado(
 ):
     """Atualiza um feriado existente"""
     try:
-        try:
-            SLAFeriado.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         feriado = db.query(SLAFeriado).filter(SLAFeriado.id == feriado_id).first()
         if not feriado:
             raise HTTPException(status_code=404, detail="Feriado não encontrado")
@@ -922,11 +774,6 @@ def atualizar_feriado(
 def deletar_feriado(feriado_id: int, db: Session = Depends(get_db)):
     """Deleta um feriado"""
     try:
-        try:
-            SLAFeriado.__table__.create(bind=engine, checkfirst=True)
-        except Exception:
-            pass
-
         feriado = db.query(SLAFeriado).filter(SLAFeriado.id == feriado_id).first()
         if not feriado:
             raise HTTPException(status_code=404, detail="Feriado não encontrado")
@@ -942,10 +789,7 @@ def deletar_feriado(feriado_id: int, db: Session = Depends(get_db)):
 
 @router.get("/metrics/tempo-medio-resposta")
 def obter_tempo_medio_resposta(db: Session = Depends(get_db)):
-    """
-    Retorna tempo médio de resposta (primeira resposta) para chamados fechados.
-    Calcula baseado em horas de negócio.
-    """
+    """Retorna tempo médio de resposta (primeira resposta) para chamados fechados."""
     try:
         from ti.services.metrics import MetricsCalculator
 
@@ -962,21 +806,16 @@ def obter_tempo_medio_resposta(db: Session = Depends(get_db)):
 
 @router.get("/metrics/tempo-medio-resolucao")
 def obter_tempo_medio_resolucao(db: Session = Depends(get_db)):
-    """
-    Retorna tempo médio de resolução para chamados fechados.
-    Calcula baseado em horas de negócio, descontando períodos em 'Em análise'.
-    """
+    """Retorna tempo médio de resolução para chamados fechados."""
     try:
         from datetime import datetime, timedelta
         from sqlalchemy import and_
         from ti.models.chamado import Chamado
-        from ti.services.sla import SLACalculator
 
         agora = now_brazil_naive()
         ontem = agora - timedelta(hours=24)
         mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-        # Últimas 24h
         chamados_24h = db.query(Chamado).filter(
             and_(
                 Chamado.data_conclusao.isnot(None),
@@ -994,14 +833,13 @@ def obter_tempo_medio_resolucao(db: Session = Depends(get_db)):
                     chamado.data_conclusao,
                     db
                 )
-                if 0 < tempo < 168:  # Sanidade: 0 a 7 dias
+                if 0 < tempo < 168:
                     tempos_24h.append(tempo)
             except Exception:
                 pass
 
         tempo_medio_24h = sum(tempos_24h) / len(tempos_24h) if tempos_24h else 0
 
-        # Mês atual
         chamados_mes = db.query(Chamado).filter(
             and_(
                 Chamado.data_conclusao.isnot(None),
@@ -1019,7 +857,7 @@ def obter_tempo_medio_resolucao(db: Session = Depends(get_db)):
                     chamado.data_conclusao,
                     db
                 )
-                if 0 < tempo < 720:  # Sanidade: 0 a 30 dias
+                if 0 < tempo < 720:
                     tempos_mes.append(tempo)
             except Exception:
                 pass
@@ -1038,10 +876,7 @@ def obter_tempo_medio_resolucao(db: Session = Depends(get_db)):
 
 @router.post("/scheduler/recalcular-agora")
 def recalcular_sla_agora(db: Session = Depends(get_db)):
-    """
-    Força a recalculação imediata de SLA de todos os chamados.
-    Útil para testes ou sincronização manual.
-    """
+    """Força a recalculação imediata de SLA de todos os chamados."""
     try:
         from ti.scripts.recalculate_sla_complete import SLARecalculator
 
@@ -1063,10 +898,7 @@ def recalcular_sla_agora(db: Session = Depends(get_db)):
 
 @router.get("/recommendations/p90-analysis")
 def analisar_p90_recomendado(db: Session = Depends(get_db)):
-    """
-    Analisa o P90 recomendado para cada prioridade.
-    Mostra quanto a conformidade melhoraria se usar P90 + 15% ao invés do SLA fixo.
-    """
+    """Analisa o P90 recomendado para cada prioridade."""
     try:
         from datetime import datetime, timedelta
 
@@ -1089,8 +921,6 @@ def analisar_p90_recomendado(db: Session = Depends(get_db)):
             print(f"\n[P90 ANALYSIS] Analisando prioridade: {prioridade}")
             print(f"  - SLA configurado: {config.tempo_resolucao_horas}h")
 
-            # Busca APENAS chamados concluídos/cancelados dessa prioridade
-            # Se houve reset, apenas chamados posteriores ao reset
             query_filters = [
                 Chamado.prioridade == prioridade,
                 Chamado.data_abertura >= data_inicio,
@@ -1100,7 +930,6 @@ def analisar_p90_recomendado(db: Session = Depends(get_db)):
                 or_(Chamado.data_conclusao.isnot(None), Chamado.cancelado_em.isnot(None))
             ]
 
-            # Se houve reset, ignora chamados abertos antes do reset
             if config.ultimo_reset_em:
                 print(f"  - Filtrando apenas chamados posteriores ao reset ({config.ultimo_reset_em})")
                 query_filters.append(Chamado.data_abertura >= config.ultimo_reset_em)
@@ -1113,26 +942,22 @@ def analisar_p90_recomendado(db: Session = Depends(get_db)):
                 print(f"  - ⚠️ Chamados insuficientes, pulando...")
                 continue
 
-            # Calcula tempos de resolução
             tempos = []
             for chamado in chamados:
                 try:
                     if chamado.data_abertura:
                         data_fim = chamado.data_conclusao or chamado.cancelado_em
                         if data_fim:
-                            from ti.services.sla import SLACalculator
                             tempo = SLACalculator.calculate_business_hours_excluding_paused(
                                 chamado.id,
                                 chamado.data_abertura,
                                 data_fim,
                                 db
                             )
-                            # Sanidade: 0-720 horas (30 dias)
                             if 0 < tempo < 720:
                                 tempos.append(tempo)
                 except Exception as e:
                     print(f"    Erro ao processar chamado {chamado.id}: {e}")
-                    pass
 
             print(f"  - Tempos válidos: {len(tempos)}")
 
@@ -1140,7 +965,6 @@ def analisar_p90_recomendado(db: Session = Depends(get_db)):
                 print(f"  - ⚠️ Tempos insuficientes, pulando...")
                 continue
 
-            # Calcula P90
             tempos_sorted = sorted(tempos)
             p90_index = int(0.9 * (len(tempos_sorted) - 1))
             if p90_index >= len(tempos_sorted):
@@ -1158,11 +982,9 @@ def analisar_p90_recomendado(db: Session = Depends(get_db)):
             print(f"  - P90: {p90:.1f}h")
             print(f"  - Máximo: {maximo:.1f}h")
 
-            # Calcula conformidade com SLA atual
             dentro_atual = sum(1 for t in tempos if t <= config.tempo_resolucao_horas)
             conformidade_atual = int((dentro_atual / len(tempos)) * 100)
 
-            # Calcula conformidade com P90
             dentro_p90 = sum(1 for t in tempos if t <= p90_com_margem)
             conformidade_p90 = int((dentro_p90 / len(tempos)) * 100)
 
