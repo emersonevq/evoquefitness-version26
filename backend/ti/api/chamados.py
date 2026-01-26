@@ -649,12 +649,12 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
             usuario_email=usuario_email_abertura,
             action_type="aberto_por",
         ))
-        # Item 2: Descrição (se houver)
+        # Item 2: Descrição (se houver) - mesmo usuário que abriu
         if ch.descricao:
             items.append(HistoricoItem(
                 t=first_dt,
-                tipo="abertura",
-                label=f"Descrição: \n{ch.descricao}",
+                tipo="descricao",
+                label=f"{ch.descricao}",
                 anexos=None,
                 usuario_id=ch.usuario_id,
                 usuario_nome=usuario_nome_abertura,
