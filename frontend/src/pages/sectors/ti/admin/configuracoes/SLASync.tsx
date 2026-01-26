@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, RefreshCw, Loader, Wrench } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  RefreshCw,
+  Loader,
+  Wrench,
+} from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -30,7 +36,9 @@ export function SLASync() {
   const [loading, setLoading] = useState(false);
   const [populatingFirstResponse, setPopulatingFirstResponse] = useState(false);
   const [stats, setStats] = useState<SyncStats | null>(null);
-  const [populateStats, setPopulateStats] = useState<PopulateStats | null>(null);
+  const [populateStats, setPopulateStats] = useState<PopulateStats | null>(
+    null,
+  );
 
   const handleSyncAll = async () => {
     setLoading(true);
@@ -63,7 +71,9 @@ export function SLASync() {
   const handlePopulateFirstResponse = async () => {
     setPopulatingFirstResponse(true);
     try {
-      const response = await api.post("/sla/maintenance/populate-primeira-resposta");
+      const response = await api.post(
+        "/sla/maintenance/populate-primeira-resposta",
+      );
       setPopulateStats(response.data);
       toast.success(
         `✓ ${response.data.total_atualizados} chamados atualizados com sucesso!`,
@@ -87,9 +97,7 @@ export function SLASync() {
         "✓ Recalcul forçado! Todos os caches foram limpos e métricas recalculadas.",
       );
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.detail || "Erro ao forçar recalcul",
-      );
+      toast.error(error.response?.data?.detail || "Erro ao forçar recalcul");
     } finally {
       setLoading(false);
     }
@@ -202,8 +210,8 @@ export function SLASync() {
               ⚠️ Manutenção & Diagnóstico
             </h3>
             <p className="text-sm text-muted-foreground">
-              Ferramentas avançadas para corrigir dados inconsistentes ou congelados.
-              Use quando as métricas não atualizam corretamente.
+              Ferramentas avançadas para corrigir dados inconsistentes ou
+              congelados. Use quando as métricas não atualizam corretamente.
             </p>
           </div>
 
@@ -212,8 +220,13 @@ export function SLASync() {
               ⚠️ Use quando necessário:
             </p>
             <ul className="list-disc list-inside space-y-1 text-red-800 dark:text-red-300">
-              <li><strong>Popular Data:</strong> Preenche histórico de respostas</li>
-              <li><strong>Forçar Recalcul:</strong> Limpa cache congelado e recalcula</li>
+              <li>
+                <strong>Popular Data:</strong> Preenche histórico de respostas
+              </li>
+              <li>
+                <strong>Forçar Recalcul:</strong> Limpa cache congelado e
+                recalcula
+              </li>
               <li>Use "Forçar Recalcul" se as métricas não mudarem</li>
             </ul>
           </div>

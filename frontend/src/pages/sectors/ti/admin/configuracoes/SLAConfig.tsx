@@ -1110,7 +1110,9 @@ export function SLA() {
       {/* Seção de Sincronização e Manutenção */}
       <div className="space-y-4">
         <div className="border-t pt-8">
-          <h2 className="text-lg font-semibold mb-4">Sincronização e Manutenção</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            Sincronização e Manutenção
+          </h2>
           <SLASync />
         </div>
       </div>
