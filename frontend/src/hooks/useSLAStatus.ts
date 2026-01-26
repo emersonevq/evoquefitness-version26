@@ -5,7 +5,14 @@ interface SLAMetric {
   tempo_decorrido_horas: number;
   tempo_limite_horas: number;
   percentual_consumido: number;
-  status: "cumprido" | "violado" | "dentro_prazo" | "proximo_vencer" | "vencido_ativo" | "pausado" | "sem_sla";
+  status:
+    | "cumprido"
+    | "violado"
+    | "dentro_prazo"
+    | "proximo_vencer"
+    | "vencido_ativo"
+    | "pausado"
+    | "sem_sla";
   data_inicio: string | null;
   data_fim: string | null;
 }
@@ -16,7 +23,14 @@ export interface SLAStatus {
   status_chamado: string;
   resposta_metric: SLAMetric | null;
   resolucao_metric: SLAMetric | null;
-  status_geral: "cumprido" | "violado" | "dentro_prazo" | "proximo_vencer" | "vencido_ativo" | "pausado" | "sem_sla";
+  status_geral:
+    | "cumprido"
+    | "violado"
+    | "dentro_prazo"
+    | "proximo_vencer"
+    | "vencido_ativo"
+    | "pausado"
+    | "sem_sla";
   data_abertura: string | null;
   data_primeira_resposta: string | null;
   data_conclusao: string | null;
@@ -31,7 +45,9 @@ export function useSLAStatus(chamadoId: number) {
   return useQuery({
     queryKey: ["sla-status", chamadoId],
     queryFn: async () => {
-      const response = await api.get<SLAStatus>(`/sla/chamado/${chamadoId}/status`);
+      const response = await api.get<SLAStatus>(
+        `/sla/chamado/${chamadoId}/status`,
+      );
       return response.data;
     },
     enabled: !!chamadoId,

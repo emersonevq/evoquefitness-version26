@@ -1,4 +1,10 @@
-import { AlertCircle, CheckCircle2, Clock, AlertTriangle, Loader } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Loader,
+} from "lucide-react";
 import { useSLAStatus, SLAStatus } from "@/hooks/useSLAStatus";
 
 interface SLAStatusDisplayProps {
@@ -194,7 +200,9 @@ export function SLAStatusDisplay({ chamadoId }: SLAStatusDisplayProps) {
         {/* Status Geral */}
         <div className="space-y-2 border-t pt-4">
           <h4 className="text-sm font-medium">Status Geral</h4>
-          <div className={`border rounded-lg p-3 ${getStatusColor(data.status_geral)}`}>
+          <div
+            className={`border rounded-lg p-3 ${getStatusColor(data.status_geral)}`}
+          >
             <div className="flex items-center gap-2">
               {(() => {
                 const Icon = getStatusIcon(data.status_geral);
