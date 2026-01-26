@@ -219,24 +219,45 @@ export function SLASync() {
             </ul>
           </div>
 
-          <Button
-            onClick={handlePopulateFirstResponse}
-            disabled={populatingFirstResponse}
-            className="w-full gap-2"
-            variant="outline"
-          >
-            {populatingFirstResponse ? (
-              <>
-                <Loader className="w-4 h-4 animate-spin" />
-                Processando...
-              </>
-            ) : (
-              <>
-                <Wrench className="w-4 h-4" />
-                Popular Data de Resposta
-              </>
-            )}
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={handlePopulateFirstResponse}
+              disabled={populatingFirstResponse}
+              className="w-full gap-2"
+              variant="outline"
+            >
+              {populatingFirstResponse ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <Wrench className="w-4 h-4" />
+                  Popular Data de Resposta
+                </>
+              )}
+            </Button>
+
+            <Button
+              onClick={handleForceRecalculate}
+              disabled={loading}
+              className="w-full gap-2"
+              variant="destructive"
+            >
+              {loading ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Forçando Recalcul...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  ⚠️ Forçar Recalcul Completo
+                </>
+              )}
+            </Button>
+          </div>
         </Card>
       </div>
 
