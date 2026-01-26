@@ -73,46 +73,11 @@ class SLACalculator:
 
     @staticmethod
     def calculate_business_hours(start: datetime, end: datetime, db: Session | None = None) -> float:
-        if start >= end:
-            return 0.0
-
-        total_minutes = 0
-        current = start
-
-        while current < end:
-            next_day = (current + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-
-            if not SLACalculator.is_business_day(current):
-                current = next_day
-                continue
-
-            bh = None
-            if db:
-                bh = SLACalculator.get_business_hours(db, current.weekday())
-            else:
-                bh = SLACalculator.DEFAULT_BUSINESS_HOURS.get(current.weekday())
-
-            if not bh:
-                current = next_day
-                continue
-
-            hora_inicio = datetime.strptime(bh[0], "%H:%M").time()
-            hora_fim = datetime.strptime(bh[1], "%H:%M").time()
-
-            day_start = current.replace(hour=hora_inicio.hour, minute=hora_inicio.minute, second=0, microsecond=0)
-            day_end = current.replace(hour=hora_fim.hour, minute=hora_fim.minute, second=0, microsecond=0)
-
-            if current < day_start:
-                current = day_start
-
-            if end <= day_end:
-                total_minutes += int((end - current).total_seconds() / 60)
-                break
-            else:
-                total_minutes += int((day_end - current).total_seconds() / 60)
-                current = next_day
-
-        return total_minutes / 60.0
+        """
+        Wrapper para BusinessHoursCalculator.calculate_business_hours
+        Mantém compatibilidade com código existente.
+        """
+        return BusinessHoursCalculator.calculate_business_hours(start, end, db)
 
     @staticmethod
     def get_sla_config_by_priority(db: Session, prioridade: str) -> SLAConfiguration | None:
