@@ -616,8 +616,14 @@ export default function Overview() {
         />
         <Metric
           label="Tempo médio de resposta"
-          value={metrics?.tempo_resposta_mes || "—"}
-          sub={`Este mês (${metrics?.total_chamados_mes || 0} chamados)`}
+          value={
+            metrics?.tempo_resposta_mes
+              ? (typeof metrics.tempo_resposta_mes === 'number'
+                  ? `${metrics.tempo_resposta_mes.toFixed(1)}h`
+                  : metrics.tempo_resposta_mes)
+              : "—"
+          }
+          sub={`Este mês (${Math.max(metrics?.total_chamados_mes || 0, slaData.dentro_sla + slaData.fora_sla)} chamados)`}
           variant="blue"
           icon={Clock}
         />
