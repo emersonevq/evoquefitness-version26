@@ -440,6 +440,90 @@ def debug_recalculate_sla(db: Session = Depends(get_db)):
         }
 
 
+@router.get("/metrics/debug/sla-data")
+def debug_sla_data(db: Session = Depends(get_db)):
+    """
+    DEBUG ENDPOINT: Mostra TODOS os dados brutos de SLA para diagnóstico.
+    Inclui contagem de chamados, tempos de resposta, distribuição, etc.
+    """
+    try:
+        from ti.models.chamado import Chamado
+        from ti.models.sla_config import SLAConfiguration
+        from core.utils import now_brazil_naive
+        from sqlalchemy import and_
+
+        agora = now_brazil_naive()
+        mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        # 1. Contagem de chamados
+        total_all = db.query(Chamado).count()
+        total_mes = db.query(Chamado).filter(
+            and_(
+                Chamado.data_abertura >= mes_inicio,
+                Chamado.data_abertura <= agora,
+                Chamado.status != "Cancelado"
+            )
+        ).count()
+
+        total_com_resposta = db.query(Chamado).filter(
+            and_(
+                Chamado.data_abertura >= mes_inicio,
+                Chamado.data_abertura <= agora,
+                Chamado.status != "Cancelado",
+                Chamado.data_primeira_resposta.isnot(None)
+            )
+        ).count()
+
+        total_ativos = db.query(Chamado).filter(
+            Chamado.status.notin_(["Concluído", "Cancelado"])
+        ).count()
+
+        # 2. Configurações SLA
+        sla_configs = db.query(SLAConfiguration).filter(
+            SLAConfiguration.ativo == True
+        ).all()
+
+        # 3. Métricas calculadas
+        metricas_sla = MetricsCalculator.get_sla_distribution(db)
+        tempo_resposta = MetricsCalculator.get_tempo_medio_resposta_mes(db)
+
+        return {
+            "status": "debug",
+            "timestamp": agora.isoformat(),
+            "contagem": {
+                "total_todos_chamados": total_all,
+                "total_mes": total_mes,
+                "total_com_resposta_mes": total_com_resposta,
+                "total_ativos_agora": total_ativos,
+            },
+            "sla": {
+                "configs_ativas": len(sla_configs),
+                "distribuicao": metricas_sla,
+            },
+            "tempos": {
+                "tempo_resposta_mes": tempo_resposta[0],
+                "total_para_calculo": tempo_resposta[1],
+            },
+            "configs_detalhe": [
+                {
+                    "prioridade": c.prioridade,
+                    "tempo_resposta_horas": c.tempo_resposta_horas,
+                    "tempo_resolucao_horas": c.tempo_resolucao_horas,
+                    "ativo": c.ativo,
+                }
+                for c in sla_configs
+            ]
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
 @router.get("/metrics/health")
 def metrics_health_check(db: Session = Depends(get_db)):
     """
