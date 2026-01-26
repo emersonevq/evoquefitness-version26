@@ -674,6 +674,7 @@ def obter_historico(chamado_id: int, db: Session = Depends(get_db)):
                     usuario_id=r.usuario_id,
                     usuario_nome=f"{usuario.nome} {usuario.sobrenome}" if usuario else None,
                     usuario_email=usuario.email if usuario else None,
+                    action_type="alterado_por",
                 ))
             # Fallback somente se não houver historico_status
             if not hs_rows:
