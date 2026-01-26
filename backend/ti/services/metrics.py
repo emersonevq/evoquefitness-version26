@@ -101,14 +101,23 @@ class MetricsCalculator:
 
     @staticmethod
     def get_tempo_medio_resposta_mes(db: Session) -> tuple[str, int]:
-        """Calcula tempo médio de PRIMEIRA resposta deste mês usando Chamado.data_primeira_resposta"""
+        """Calcula tempo médio de PRIMEIRA resposta deste mês - SEM FILTROS RESTRITIVOS"""
         from ti.services.sla import SLACalculator
 
         agora = now_brazil_naive()
         mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         try:
-            # Busca chamados do mês que já tiveram primeira resposta
+            # Conta total de chamados do mês (sem status != "Cancelado")
+            total_chamados_mes = db.query(Chamado).filter(
+                and_(
+                    Chamado.data_abertura >= mes_inicio,
+                    Chamado.data_abertura <= agora,
+                    Chamado.status != "Cancelado"
+                )
+            ).count()
+
+            # ⚠️ Busca chamados que tiveram primeira resposta (com ou sem conclusão)
             chamados = db.query(Chamado).filter(
                 and_(
                     Chamado.data_abertura >= mes_inicio,
@@ -117,15 +126,6 @@ class MetricsCalculator:
                     Chamado.data_primeira_resposta.isnot(None)
                 )
             ).all()
-
-            # Conta total de chamados do mês (mesmo sem resposta)
-            total_chamados_mes = db.query(Chamado).filter(
-                and_(
-                    Chamado.data_abertura >= mes_inicio,
-                    Chamado.data_abertura <= agora,
-                    Chamado.status != "Cancelado"
-                )
-            ).count()
 
             if not chamados:
                 return "—", total_chamados_mes
@@ -166,25 +166,19 @@ class MetricsCalculator:
 
     @staticmethod
     def get_sla_compliance_24h(db: Session) -> int:
-        """Calcula percentual de SLA cumprido (baseado em chamados ativos) - usa fonte unificada"""
+        """Calcula percentual de SLA cumprido (baseado em chamados ativos) - SEM CACHE"""
         from ti.services.sla_metrics_unified import UnifiedSLAMetricsCalculator
 
-        # Tenta cache primeiro
-        cached = SLACacheManager.get(db, "sla_compliance_24h")
-        if cached is not None:
-            print(f"[CACHE HIT] SLA Compliance 24h: {cached}%")
-            return cached
-
-        print("[CACHE MISS] SLA Compliance 24h calculando...")
+        # ⚠️ CACHE REMOVIDO: Métricas devem SEMPRE ser recalculadas para dados em tempo real
+        print("[CALC] SLA Compliance 24h calculando (sem cache)...")
         result_dict = UnifiedSLAMetricsCalculator.get_sla_compliance_24h(db)
         result = result_dict["percentual"]
-        print(f"[CACHE SET] SLA Compliance 24h: {result}%")
-        SLACacheManager.set(db, "sla_compliance_24h", result)
+        print(f"[CALC] SLA Compliance 24h: {result}%")
         return result
 
     @staticmethod
     def _calculate_sla_compliance_24h(db: Session) -> int:
-        """Cálculo real de SLA 24h - otimizado sem N+1"""
+        """Cálculo real de SLA 24h - INCLUI TODOS os chamados ativos"""
         try:
             from ti.services.sla import SLACalculator
             from ti.models.historico_status import HistoricoStatus
@@ -200,10 +194,10 @@ class MetricsCalculator:
             if not sla_configs:
                 return 0
 
-            # 2. Busca chamados ativos
+            # 2. Busca TODOS os chamados ativos (não filtra por data_primeira_resposta)
             chamados_ativos = db.query(Chamado).filter(
                 and_(
-                    Chamado.status.notin_(["Concluido", "Cancelado"])
+                    Chamado.status.notin_(["Concluído", "Cancelado"])
                 )
             ).all()
 
@@ -268,25 +262,19 @@ class MetricsCalculator:
 
     @staticmethod
     def get_sla_compliance_mes(db: Session) -> int:
-        """Calcula percentual de SLA cumprido para todos os chamados do mês - usa fonte unificada"""
+        """Calcula percentual de SLA cumprido para todos os chamados do mês - SEM CACHE"""
         from ti.services.sla_metrics_unified import UnifiedSLAMetricsCalculator
 
-        # Tenta cache primeiro
-        cached = SLACacheManager.get(db, "sla_compliance_mes")
-        if cached is not None:
-            print(f"[CACHE HIT] SLA Compliance Mês: {cached}%")
-            return cached
-
-        print("[CACHE MISS] SLA Compliance Mês calculando...")
+        # ⚠️ CACHE REMOVIDO: Métricas devem SEMPRE ser recalculadas para dados em tempo real
+        print("[CALC] SLA Compliance Mês calculando (sem cache)...")
         result_dict = UnifiedSLAMetricsCalculator.get_sla_compliance_month(db)
         result = result_dict["percentual"]
-        print(f"[CACHE SET] SLA Compliance Mês: {result}%")
-        SLACacheManager.set(db, "sla_compliance_mes", result)
+        print(f"[CALC] SLA Compliance Mês: {result}%")
         return result
 
     @staticmethod
     def _calculate_sla_compliance_mes(db: Session) -> int:
-        """Cálculo real de SLA mensal - otimizado sem N+1"""
+        """Cálculo real de SLA mensal - INCLUI TODOS os chamados (com ou sem resposta)"""
         try:
             from ti.services.sla import SLACalculator
             from ti.models.historico_status import HistoricoStatus
@@ -305,13 +293,13 @@ class MetricsCalculator:
             if not sla_configs:
                 return 0
 
-            # 2. Busca chamados do mês que tiveram resposta
+            # 2. ⚠️ REMOVIDO: data_primeira_resposta.isnot(None)
+            # Busca TODOS os chamados do mês (com ou sem resposta)
             chamados_mes = db.query(Chamado).filter(
                 and_(
                     Chamado.data_abertura >= mes_inicio,
                     Chamado.data_abertura <= agora,
-                    Chamado.status != "Cancelado",
-                    Chamado.data_primeira_resposta.isnot(None)
+                    Chamado.status != "Cancelado"
                 )
             ).all()
 
@@ -603,19 +591,11 @@ class MetricsCalculator:
 
     @staticmethod
     def get_sla_distribution(db: Session) -> dict:
-        """Retorna distribuição de SLA (dentro/fora) - usa fonte unificada"""
+        """Retorna distribuição de SLA (dentro/fora) - SEM CACHE"""
         from ti.services.sla_metrics_unified import UnifiedSLAMetricsCalculator
 
-        # Tenta cache primeiro
-        cached = SLACacheManager.get(db, "sla_distribution")
-        if cached is not None:
-            print(f"[CACHE HIT] SLA Distribution: {cached}")
-            # Valida e extrai se estiver wrapped em {'value': ...}
-            if isinstance(cached, dict) and 'value' in cached and len(cached) == 1:
-                cached = cached['value']
-            return cached
-
-        print("[CACHE MISS] SLA Distribution calculando...")
+        # ⚠️ CACHE REMOVIDO: Métricas devem SEMPRE ser recalculadas para dados em tempo real
+        print("[CALC] SLA Distribution calculando (sem cache)...")
 
         agora = now_brazil_naive()
         mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -633,13 +613,12 @@ class MetricsCalculator:
             "total": result["total"]
         }
 
-        print(f"[CACHE SET] SLA Distribution: {formatted_result}")
-        SLACacheManager.set(db, "sla_distribution", formatted_result)
+        print(f"[CALC] SLA Distribution: {formatted_result}")
         return formatted_result
 
     @staticmethod
     def _calculate_sla_distribution(db: Session) -> dict:
-        """Cálculo real - usa MESMOS critérios que get_sla_compliance_mes - OTIMIZADO"""
+        """Cálculo real - INCLUI TODOS os chamados do mês (com ou sem resposta)"""
         try:
             from ti.services.sla import SLACalculator
             from ti.models.historico_status import HistoricoStatus
@@ -647,13 +626,13 @@ class MetricsCalculator:
             agora = now_brazil_naive()
             mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-            # IMPORTANTE: Usa MESMOS chamados que o card SLA (todos do mês)
+            # ⚠️ REMOVIDO: data_primeira_resposta.isnot(None)
+            # Agora inclui TODOS os chamados do mês para contar corretamente
             chamados_mes = db.query(Chamado).filter(
                 and_(
                     Chamado.data_abertura >= mes_inicio,
                     Chamado.data_abertura <= agora,
-                    Chamado.status != "Cancelado",
-                    Chamado.data_primeira_resposta.isnot(None)
+                    Chamado.status != "Cancelado"
                 )
             ).all()
 

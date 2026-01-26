@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, RefreshCw, Loader } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  RefreshCw,
+  Loader,
+  Wrench,
+} from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -17,9 +23,22 @@ interface SyncStats {
   erros?: number;
 }
 
+interface PopulateStats {
+  ok?: boolean;
+  message?: string;
+  total_atualizados?: number;
+  total_pulados?: number;
+  erros?: number;
+  cache_invalidado?: boolean;
+}
+
 export function SLASync() {
   const [loading, setLoading] = useState(false);
+  const [populatingFirstResponse, setPopulatingFirstResponse] = useState(false);
   const [stats, setStats] = useState<SyncStats | null>(null);
+  const [populateStats, setPopulateStats] = useState<PopulateStats | null>(
+    null,
+  );
 
   const handleSyncAll = async () => {
     setLoading(true);
@@ -49,6 +68,41 @@ export function SLASync() {
     }
   };
 
+  const handlePopulateFirstResponse = async () => {
+    setPopulatingFirstResponse(true);
+    try {
+      const response = await api.post(
+        "/sla/maintenance/populate-primeira-resposta",
+      );
+      setPopulateStats(response.data);
+      toast.success(
+        `✓ ${response.data.total_atualizados} chamados atualizados com sucesso!`,
+      );
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.detail ||
+          "Erro ao popular data de primeira resposta",
+      );
+    } finally {
+      setPopulatingFirstResponse(false);
+    }
+  };
+
+  const handleForceRecalculate = async () => {
+    setLoading(true);
+    try {
+      const response = await api.post("/sla/maintenance/force-recalculate-all");
+      setStats(response.data.metrics);
+      toast.success(
+        "✓ Recalcul forçado! Todos os caches foram limpos e métricas recalculadas.",
+      );
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || "Erro ao forçar recalcul");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4">
@@ -65,7 +119,7 @@ export function SLASync() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Sincronização Inicial */}
         <Card className="p-6 space-y-4">
           <div className="space-y-2">
@@ -147,7 +201,127 @@ export function SLASync() {
             )}
           </Button>
         </Card>
+
+        {/* Manutenção: Popular Data de Primeira Resposta */}
+        <Card className="p-6 space-y-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
+          <div className="space-y-2">
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <Wrench className="w-4 h-4" />
+              ⚠️ Manutenção & Diagnóstico
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Ferramentas avançadas para corrigir dados inconsistentes ou
+              congelados. Use quando as métricas não atualizam corretamente.
+            </p>
+          </div>
+
+          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-sm space-y-2">
+            <p className="font-medium text-red-900 dark:text-red-400">
+              ⚠️ Use quando necessário:
+            </p>
+            <ul className="list-disc list-inside space-y-1 text-red-800 dark:text-red-300">
+              <li>
+                <strong>Popular Data:</strong> Preenche histórico de respostas
+              </li>
+              <li>
+                <strong>Forçar Recalcul:</strong> Limpa cache congelado e
+                recalcula
+              </li>
+              <li>Use "Forçar Recalcul" se as métricas não mudarem</li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <Button
+              onClick={handlePopulateFirstResponse}
+              disabled={populatingFirstResponse}
+              className="w-full gap-2"
+              variant="outline"
+            >
+              {populatingFirstResponse ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <Wrench className="w-4 h-4" />
+                  Popular Data de Resposta
+                </>
+              )}
+            </Button>
+
+            <Button
+              onClick={handleForceRecalculate}
+              disabled={loading}
+              className="w-full gap-2"
+              variant="destructive"
+            >
+              {loading ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Forçando Recalcul...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  ⚠️ Forçar Recalcul Completo
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
       </div>
+
+      {/* Resultados da Manutenção */}
+      {populateStats && (
+        <Card className="p-6 border-blue-200 dark:border-blue-800">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-blue-600" />
+            Resultados da Manutenção
+          </h3>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Atualizados</p>
+              <p className="text-2xl font-bold text-green-600">
+                {populateStats.total_atualizados}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Pulados</p>
+              <p className="text-2xl font-bold text-amber-600">
+                {populateStats.total_pulados}
+              </p>
+            </div>
+
+            {populateStats.erros > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Erros</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {populateStats.erros}
+                </p>
+              </div>
+            )}
+
+            {populateStats.cache_invalidado && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Status</p>
+                <p className="text-sm font-semibold text-blue-600">
+                  Cache Limpo ✓
+                </p>
+              </div>
+            )}
+          </div>
+
+          {populateStats.message && (
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-800 dark:text-blue-300">
+              {populateStats.message}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Resultados */}
       {stats && (

@@ -31,6 +31,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { SLASync } from "./SLASync";
 
 interface SLAConfig {
   id: number;
@@ -1104,6 +1105,16 @@ export function SLA() {
             Nenhum feriado configurado
           </div>
         )}
+      </div>
+
+      {/* Seção de Sincronização e Manutenção */}
+      <div className="space-y-4">
+        <div className="border-t pt-8">
+          <h2 className="text-lg font-semibold mb-4">
+            Sincronização e Manutenção
+          </h2>
+          <SLASync />
+        </div>
       </div>
     </div>
   );
