@@ -131,7 +131,13 @@ function StatusPill({ status }: { status: TicketStatus }) {
 }
 
 // Componente para mostrar quem fez a ação no histórico
-function HistoryAuthor({ item, solicitanteNome }: { item: HistoryItem; solicitanteNome: string }) {
+function HistoryAuthor({
+  item,
+  solicitanteNome,
+}: {
+  item: HistoryItem;
+  solicitanteNome: string;
+}) {
   const actionType = item.action_type;
   const usuarioNome = item.usuario_nome;
   const usuarioEmail = item.usuario_email;
@@ -143,9 +149,7 @@ function HistoryAuthor({ item, solicitanteNome }: { item: HistoryItem; solicitan
         <User className="h-3.5 w-3.5 text-blue-500" />
         <span>
           Aberto por:{" "}
-          <span className="font-medium text-foreground">
-            {solicitanteNome}
-          </span>
+          <span className="font-medium text-foreground">{solicitanteNome}</span>
         </span>
       </div>
     );
@@ -187,9 +191,7 @@ function HistoryAuthor({ item, solicitanteNome }: { item: HistoryItem; solicitan
       <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
       <span>
         {actionLabel}:{" "}
-        <span className="font-medium text-foreground">
-          {usuarioNome}
-        </span>
+        <span className="font-medium text-foreground">{usuarioNome}</span>
         {usuarioEmail && (
           <span className="text-muted-foreground/70"> ({usuarioEmail})</span>
         )}
@@ -616,74 +618,99 @@ export default function ChamadosPage() {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
   // Função para processar histórico da API
-  const processHistoryItems = useCallback((data: any, solicitanteNome: string): HistoryItem[] => {
-    if (!data?.items) return [];
-    
-    return data.items.map((it: any, index: number) => {
-      // Determina o tipo de ação
-      let action_type: ActionType = "outro";
-      const labelLower = (it.label || "").toLowerCase();
-      
-      if (labelLower.includes("aberto") || labelLower.includes("criado") || index === 0) {
-        action_type = "aberto_por";
-      } else if (labelLower.includes("ticket") || labelLower.includes("enviado") || labelLower.includes("respondido")) {
-        action_type = "ticket";
-      } else if (labelLower.includes("status") || labelLower.includes("alterado para")) {
-        action_type = "status";
-      } else if (labelLower.includes("atribuído") || labelLower.includes("atribuido")) {
-        action_type = "atribuicao";
-      }
-      
-      // Se é abertura, usa o nome do solicitante
-      const usuario_nome = action_type === "aberto_por" 
-        ? solicitanteNome 
-        : (it.usuario_nome && it.usuario_nome !== "Sistema" ? it.usuario_nome : null);
-      
-      return {
-        t: new Date(it.t).getTime(),
-        label: it.label,
-        action_type: it.action_type || action_type,
-        usuario_nome,
-        usuario_email: action_type === "aberto_por" ? null : it.usuario_email,
-        attachments: it.anexos
-          ? it.anexos.map((a: any) => a.nome_original)
-          : undefined,
-        files: it.anexos
-          ? it.anexos.map((a: any) => ({
-              name: a.nome_original,
-              url: `${API_BASE.replace(/\/api$/, "")}/${a.caminho_arquivo}`,
-              mime: a.mime_type || undefined,
-            }))
-          : undefined,
-      };
-    });
-  }, []);
+  const processHistoryItems = useCallback(
+    (data: any, solicitanteNome: string): HistoryItem[] => {
+      if (!data?.items) return [];
 
-  const initFromSelected = useCallback((s: UiTicket) => {
-    setTab("resumo");
-    setSubject(`Atualização do Chamado ${s.id}`);
-    setMessage("");
-    setTemplate("");
-    setPriority(false);
-    setCcMe(false);
-    setFiles([]);
+      return data.items.map((it: any, index: number) => {
+        // Determina o tipo de ação
+        let action_type: ActionType = "outro";
+        const labelLower = (it.label || "").toLowerCase();
 
-    apiFetch(`/chamados/${s.id}/historico`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
-      .then((data) => {
-        const arr = processHistoryItems(data, s.solicitante);
-        setHistory(arr);
-      })
-      .catch(() => {
-        const base = new Date(s.criadoEm).getTime();
-        setHistory([{ 
-          t: base, 
-          label: "Chamado aberto",
-          action_type: "aberto_por",
-          usuario_nome: s.solicitante
-        }]);
+        if (
+          labelLower.includes("aberto") ||
+          labelLower.includes("criado") ||
+          index === 0
+        ) {
+          action_type = "aberto_por";
+        } else if (
+          labelLower.includes("ticket") ||
+          labelLower.includes("enviado") ||
+          labelLower.includes("respondido")
+        ) {
+          action_type = "ticket";
+        } else if (
+          labelLower.includes("status") ||
+          labelLower.includes("alterado para")
+        ) {
+          action_type = "status";
+        } else if (
+          labelLower.includes("atribuído") ||
+          labelLower.includes("atribuido")
+        ) {
+          action_type = "atribuicao";
+        }
+
+        // Se é abertura, usa o nome do solicitante
+        const usuario_nome =
+          action_type === "aberto_por"
+            ? solicitanteNome
+            : it.usuario_nome && it.usuario_nome !== "Sistema"
+              ? it.usuario_nome
+              : null;
+
+        return {
+          t: new Date(it.t).getTime(),
+          label: it.label,
+          action_type: it.action_type || action_type,
+          usuario_nome,
+          usuario_email: action_type === "aberto_por" ? null : it.usuario_email,
+          attachments: it.anexos
+            ? it.anexos.map((a: any) => a.nome_original)
+            : undefined,
+          files: it.anexos
+            ? it.anexos.map((a: any) => ({
+                name: a.nome_original,
+                url: `${API_BASE.replace(/\/api$/, "")}/${a.caminho_arquivo}`,
+                mime: a.mime_type || undefined,
+              }))
+            : undefined,
+        };
       });
-  }, [processHistoryItems]);
+    },
+    [],
+  );
+
+  const initFromSelected = useCallback(
+    (s: UiTicket) => {
+      setTab("resumo");
+      setSubject(`Atualização do Chamado ${s.id}`);
+      setMessage("");
+      setTemplate("");
+      setPriority(false);
+      setCcMe(false);
+      setFiles([]);
+
+      apiFetch(`/chamados/${s.id}/historico`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error("fail"))))
+        .then((data) => {
+          const arr = processHistoryItems(data, s.solicitante);
+          setHistory(arr);
+        })
+        .catch(() => {
+          const base = new Date(s.criadoEm).getTime();
+          setHistory([
+            {
+              t: base,
+              label: "Chamado aberto",
+              action_type: "aberto_por",
+              usuario_nome: s.solicitante,
+            },
+          ]);
+        });
+    },
+    [processHistoryItems],
+  );
 
   async function handleSendTicket() {
     if (!selected) return;
@@ -964,7 +991,10 @@ export default function ChamadosPage() {
                           const hist = await apiFetch(
                             `/chamados/${id}/historico`,
                           ).then((x) => x.json());
-                          const arr = processHistoryItems(hist, selected.solicitante);
+                          const arr = processHistoryItems(
+                            hist,
+                            selected.solicitante,
+                          );
                           setHistory(arr);
                           setTab("historico");
                         }
@@ -1324,7 +1354,10 @@ export default function ChamadosPage() {
                               const hist = await apiFetch(
                                 `/chamados/${selected.id}/historico`,
                               ).then((x) => x.json());
-                              const arr = processHistoryItems(hist, selected.solicitante);
+                              const arr = processHistoryItems(
+                                hist,
+                                selected.solicitante,
+                              );
                               setHistory(arr);
                               setTab("historico");
                               toast({
@@ -1362,29 +1395,34 @@ export default function ChamadosPage() {
                     <div className="relative border-l-2 border-border pl-6 space-y-6">
                       {history.map((ev, idx) => {
                         // Define cor do ponto baseado no tipo de ação
-                        const dotColor = ev.action_type === "aberto_por"
-                          ? "bg-blue-500"
-                          : ev.action_type === "ticket"
-                            ? "bg-green-500"
-                            : ev.action_type === "status"
-                              ? "bg-amber-500"
-                              : ev.action_type === "atribuicao"
-                                ? "bg-purple-500"
-                                : "bg-primary";
+                        const dotColor =
+                          ev.action_type === "aberto_por"
+                            ? "bg-blue-500"
+                            : ev.action_type === "ticket"
+                              ? "bg-green-500"
+                              : ev.action_type === "status"
+                                ? "bg-amber-500"
+                                : ev.action_type === "atribuicao"
+                                  ? "bg-purple-500"
+                                  : "bg-primary";
 
                         return (
                           <div key={idx} className="relative">
-                            <div className={`absolute -left-[29px] top-2 h-4 w-4 rounded-full ${dotColor} ring-4 ring-background border-2 border-background`} />
+                            <div
+                              className={`absolute -left-[29px] top-2 h-4 w-4 rounded-full ${dotColor} ring-4 ring-background border-2 border-background`}
+                            />
                             <div className="space-y-2">
                               <p className="font-medium">{ev.label}</p>
                               <div className="text-xs text-muted-foreground">
                                 <p>{new Date(ev.t).toLocaleString()}</p>
                               </div>
-                              
+
                               {/* Componente de autor melhorado */}
-                              <HistoryAuthor 
-                                item={ev} 
-                                solicitanteNome={selected?.solicitante || "Usuário"} 
+                              <HistoryAuthor
+                                item={ev}
+                                solicitanteNome={
+                                  selected?.solicitante || "Usuário"
+                                }
                               />
 
                               {ev.files && ev.files.length > 0 && (
