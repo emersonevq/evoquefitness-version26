@@ -223,6 +223,56 @@ export function SLASync() {
         </Card>
       </div>
 
+      {/* Resultados da Manutenção */}
+      {populateStats && (
+        <Card className="p-6 border-blue-200 dark:border-blue-800">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-blue-600" />
+            Resultados da Manutenção
+          </h3>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Atualizados</p>
+              <p className="text-2xl font-bold text-green-600">
+                {populateStats.total_atualizados}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Pulados</p>
+              <p className="text-2xl font-bold text-amber-600">
+                {populateStats.total_pulados}
+              </p>
+            </div>
+
+            {populateStats.erros > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Erros</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {populateStats.erros}
+                </p>
+              </div>
+            )}
+
+            {populateStats.cache_invalidado && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Status</p>
+                <p className="text-sm font-semibold text-blue-600">
+                  Cache Limpo ✓
+                </p>
+              </div>
+            )}
+          </div>
+
+          {populateStats.message && (
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-800 dark:text-blue-300">
+              {populateStats.message}
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* Resultados */}
       {stats && (
         <Card className="p-6">
