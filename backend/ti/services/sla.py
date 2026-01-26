@@ -10,50 +10,35 @@ from core.utils import now_brazil_naive
 
 
 class SLACalculator:
-    DEFAULT_BUSINESS_HOURS = {
-        0: ("08:00", "18:00"),
-        1: ("08:00", "18:00"),
-        2: ("08:00", "18:00"),
-        3: ("08:00", "18:00"),
-        4: ("08:00", "18:00"),
-    }
-
+    # Delegados para BusinessHoursCalculator (evita duplicação)
     @staticmethod
     def get_business_hours(db: Session, dia_semana: int) -> tuple[str, str] | None:
-        try:
-            bh = db.query(SLABusinessHours).filter(
-                and_(
-                    SLABusinessHours.dia_semana == dia_semana,
-                    SLABusinessHours.ativo == True
-                )
-            ).first()
-            if bh:
-                return (bh.hora_inicio, bh.hora_fim)
-        except Exception:
-            pass
-        return SLACalculator.DEFAULT_BUSINESS_HOURS.get(dia_semana)
+        """Wrapper para compatibilidade - usa BusinessHoursCalculator"""
+        import datetime as dt_module
+        dummy_date = dt_module.datetime.now().replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        # Cria date para o dia da semana especificado
+        while dummy_date.weekday() != dia_semana:
+            dummy_date += dt_module.timedelta(days=1)
+
+        result = BusinessHoursCalculator.get_business_hours_for_day(dummy_date, db)
+        if result:
+            return (result[0].strftime("%H:%M"), result[1].strftime("%H:%M"))
+        return None
 
     @staticmethod
     def is_business_day(data: datetime) -> bool:
-        return data.weekday() < 5
+        """Wrapper para compatibilidade - usa BusinessHoursCalculator"""
+        return BusinessHoursCalculator.is_business_day(data)
 
     @staticmethod
     def is_business_time(dt: datetime, db: Session | None = None) -> bool:
-        if not SLACalculator.is_business_day(dt):
-            return False
-
-        bh = None
-        if db:
-            bh = SLACalculator.get_business_hours(db, dt.weekday())
-        else:
-            bh = SLACalculator.DEFAULT_BUSINESS_HOURS.get(dt.weekday())
-
+        """Wrapper para compatibilidade - usa BusinessHoursCalculator"""
+        bh = BusinessHoursCalculator.get_business_hours_for_day(dt, db)
         if not bh:
             return False
-
-        hora_inicio = datetime.strptime(bh[0], "%H:%M").time()
-        hora_fim = datetime.strptime(bh[1], "%H:%M").time()
-        return hora_inicio <= dt.time() <= hora_fim
+        return bh[0] <= dt.time() <= bh[1]
 
     @staticmethod
     def calculate_business_hours_excluding_paused(
